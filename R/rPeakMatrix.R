@@ -31,12 +31,10 @@
 #' @param imzMLSubCoords a Complex vector with the motors coordinates to be included in the ramdisk, if NULL all positions will be used.
 #' @param fixBrokenUUID set to FALSE by default to automatically fix an uuid mismatch between the ibd and the imzML files (a warning message will be raised).
 #'
-#' @return an rMSI object pointing to ramdisk stored data
-#'
-#' Loads a rMSI data object from .XrMSI file or imzML format. 
-#' fun_progress can be NULL or a function with the following prototipe: fun_progress( currentState ). If NULL is used
-#' a default command line progress bar is used.
-#' This function will be called periodically to monitor the loading status. This is usefull to implement progressbars.
+#' @return a list: 
+#'   peakMatrix: Matrix of peak (centroids) rows = pixels, columns = intensity of each pixel.
+#'         mass: Vector with the masses associated with each column of peakMatrix.
+#'pixelsSupport: Vector with the number of pixels in each column with non-zero intensity.#' @return an rMSI object pointing to ramdisk stored data
 #'
 #' @export
 getPeakMatrix<-function(data_file,
