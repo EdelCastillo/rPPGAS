@@ -17,16 +17,16 @@
 #********************************************************************************/
   
 #' getPeakMatrix()
-#' obtiene la matrix de picos a partir de ficheros imzML
-#' @param data_file The imzML file containing the MS image in rMSI format or imzML.
-#' @param params  parámetros de operación
-#'    "SNR":              relación señal/ruido
-#'    "minPixelsSupport": cantidad mínima de pixeles que deben soportar a un centroide para que se considere
-#'    "massResolution":   resolución de masas del espectrómetro
-#'    "maxMassResolution": maximum desired mass resolution.
-#'    "SNRmethod":        "estnoise_diff", "estnoise_sd", "estnoise_mad"
-#' @param lowMass  masa inferior a considerar
-#' @param highMass masa superior a considerar
+#' obtains the peak matrix from imzML files.
+#' @param data_file absolute reference to the file with the imzML extension.
+#' @param params  specific parameters
+#'      "massResolution": mass resolution with which the spectra were acquired.
+#'   "maxMassResolution": maximum desired mass resolution.
+#'    "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+#'                 "SNR": signal-to-noise ratio
+#'         "noiseMethod": method for estimating noise.
+#' @param lowMass  lower mass to consider
+#' @param highMass higher mass to consider
 #' @param imzMLChecksum if the binary file checksum must be verified, it can be disabled for convenice with really big files.
 #' @param imzMLSubCoords a Complex vector with the motors coordinates to be included in the ramdisk, if NULL all positions will be used.
 #' @param fixBrokenUUID set to FALSE by default to automatically fix an uuid mismatch between the ibd and the imzML files (a warning message will be raised).
