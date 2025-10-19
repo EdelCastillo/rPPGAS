@@ -18,18 +18,19 @@
   
 #' getPeakMatrix()
 #' obtains the peak matrix from imzML files.
-#' @param data_file absolute reference to the file with the imzML extension.
+#' @param data_file: absolute reference to the file with the imzML extension.
 #' @param params  specific parameters
 #'      "massResolution": mass resolution with which the spectra were acquired.
 #'   "maxMassResolution": maximum desired mass resolution.
 #'    "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 #'                 "SNR": signal-to-noise ratio
 #'         "noiseMethod": method for estimating noise.
-#' @param lowMass  lower mass to consider
-#' @param highMass higher mass to consider
-#' @param imzMLChecksum if the binary file checksum must be verified, it can be disabled for convenice with really big files.
-#' @param imzMLSubCoords a Complex vector with the motors coordinates to be included in the ramdisk, if NULL all positions will be used.
-#' @param fixBrokenUUID set to FALSE by default to automatically fix an uuid mismatch between the ibd and the imzML files (a warning message will be raised).
+#' @param lowMass:  lower mass to consider
+#' @param highMass: higher mass to consider
+#' @param nThreads: number of threads for parallel processing (if zero, nThreads=maxCores-1)
+#' @param imzMLChecksum: if the binary file checksum must be verified, it can be disabled for convenice with really big files.
+#' @param imzMLSubCoords: a Complex vector with the motors coordinates to be included in the ramdisk, if NULL all positions will be used.
+#' @param fixBrokenUUID: set to FALSE by default to automatically fix an uuid mismatch between the ibd and the imzML files (a warning message will be raised).
 #'
 #' @return a list: 
 #'   peakMatrix: Matrix of peak (centroids) rows = pixels, columns = intensity of each pixel.
