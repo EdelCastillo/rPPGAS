@@ -23,7 +23,7 @@ Specifically, it is a new peak picking algorithm that achieves two goals: high c
 ### **Step 1**.- A list with the necessary parameters is generated.
 
 > For **example**:  
->params\ <-list("massResolution"=30000, "maxMassResolution"=120000, "minPixelsSupport"=5, "SNR"=1,  "SNRmethod"="estnoise_mad");
+>params\ <-list("massResolution"=30000, "maxMassResolution"=120000, "minPixelsSupport"=5, "SNR"=3,  "SNRmethod"="estnoise_mad");
 
 **Description of the parameters:**
 
@@ -41,7 +41,7 @@ noiseMethod:        Procedure used for noise estimation:
 
 ### **Step 2**.- The peak-picking algorithm is applied and its peak matrix is obtained:
 
-> pMatrix <-getPeakMatrix(imzML_file_path, params, initMass, finalMass)
+> pMatrix <-getPeakMatrix(imzML_file_path, params, initMass, finalMass, nThreads)
 
 **Description of the parameters:**   
 ```
@@ -50,6 +50,7 @@ imzML_file_path: Absolute path to the filename with the imzML extension.
          params: List of parameters given in Step 1.
        initMass: Initial mass to consider.
       finalMass: Final   mass to consider.
+       nThreads: Number of threads for parallel processing (if zero, nThreads=maxCores-1)
 
   return a list: 
    peakMatrix: Matrix of peak (centroids) rows = pixels, columns = intensity of each pixel.
