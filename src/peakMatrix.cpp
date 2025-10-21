@@ -1003,8 +1003,6 @@ for(int i=iLow; i<=iHigh; i++)
     if(!hit) 
     {
         iter++;
-      printf("Warning: clustering failed in mass range %.5f/%.5f with %d clusters (maxClusters=%d) %.4f\n", 
-             m_massRange_p[mrIndex].low, m_massRange_p[mrIndex].high, kmeans.m_kStruct.nClusters, maxClustersRange, newMassRes);
       if(iter>=maxMasterIter) //limit control. Ensures that it ends.
         {
           printf("Warning: clustering failed in mass range %.5f/%.5f with %d clusters (maxClusters=%d)\n", 
