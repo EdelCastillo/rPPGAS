@@ -152,17 +152,17 @@ CimzMLStore <- function(fname, imgInfo, mass_spectrometer_file_format = "rMSI ex
 #'  @param imzML  list with information extracted from the imzML file with import_imzML()
 #'  @param params specific parameters
 #'   "SNR": signal-to-noise ratio
-#'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 #'   "massResolution": mass resolution with which the spectra were acquired.
-#'   "maxMassResolution": maximum desired mass resolution.
 #'   "noiseMethod": method for estimating noise.
+#'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 #'  @param mzLow  lower mass to consider
 #'  @param mzHigh higher mass to consider
 #'  @nThreads number of threads suggested for parallel processing.
-#'  @return lista: peakMatrix, massVector, pixelsSupport
+#'  @return lista: peakMatrix, massVector, massResolution, pixelsSupport
 #'     peakMatrix: matrix of centroids and the intensity associated with each pixel.
+#'     massResolution: 
 #'     massVector: the mz associated with each column of peakmatrix.
-#'     pixelsSupport: number of pixels with intensity > 0
+#'     pixelsSupport: number of pixels with intensity >= minPixelsSupport
 NULL
 
 peakMatrix <- function(ibdFname, imzML, params, mzLow, mzHigh, nThreads) {

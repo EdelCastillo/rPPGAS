@@ -104,7 +104,8 @@
     typedef struct ION_ENTRY
     {
       float 	*set,          //items
-              mass;
+              mass,
+              massResolution;
       int 	  size;          //group size.
       struct  ION_ENTRY *group;
     }ION_ENTRY;             //chain link for ion info.

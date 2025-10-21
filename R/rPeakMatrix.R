@@ -21,10 +21,9 @@
 #' @param data_file: absolute reference to the file with the imzML extension.
 #' @param params  specific parameters
 #'      "massResolution": mass resolution with which the spectra were acquired.
-#'   "maxMassResolution": maximum desired mass resolution.
-#'    "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 #'                 "SNR": signal-to-noise ratio
 #'         "noiseMethod": method for estimating noise.
+#'    "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 #' @param lowMass:  lower mass to consider
 #' @param highMass: higher mass to consider
 #' @param nThreads: number of threads for parallel processing (if zero, nThreads=maxCores-1)
@@ -78,12 +77,7 @@ getPeakMatrix<-function(data_file,
     print("ERROR: massResolution must be greater than zero.") 
     return (0)
   }
-  if(!(exists("maxMassResolution", where=params)) | params$maxMassResolution==0)
-  {
-    print("warning: maxMassResolution parameter will be equal to maximun resolution (no peak will be rejected)")
-    params=c(params, "maxMassResolution"=0)
-  }
-  
+
   imgData <- NULL
   
   #Default  fun_label()

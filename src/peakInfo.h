@@ -74,7 +74,7 @@ class IntensityPeak
 
         Peak           *m_intPeak_p;  //pointer to Peak class for magnitude.
         int             m_nUnitedPeak; //number of entries in m_unitedPeak_p.
-        PEAK_LIST      m_peakList;
+        PEAK_LIST       m_peakList;
         int             m_nIntPeak;
         float           m_SNR;
 };

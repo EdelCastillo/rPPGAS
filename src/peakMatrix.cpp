@@ -27,17 +27,17 @@ int  globalPeak=0, globalCount=0; //contadores de picos
 //'  @param imzML  list with information extracted from the imzML file with import_imzML()
 //'  @param params specific parameters
 //'   "SNR": signal-to-noise ratio
-//'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 //'   "massResolution": mass resolution with which the spectra were acquired.
-//'   "maxMassResolution": maximum desired mass resolution.
 //'   "noiseMethod": method for estimating noise.
+//'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 //'  @param mzLow  lower mass to consider
 //'  @param mzHigh higher mass to consider
 //'  @nThreads number of threads suggested for parallel processing.
-//'  @return lista: peakMatrix, massVector, pixelsSupport
+//'  @return lista: peakMatrix, massVector, massResolution, pixelsSupport
 //'     peakMatrix: matrix of centroids and the intensity associated with each pixel.
+//'     massResolution: 
 //'     massVector: the mz associated with each column of peakmatrix.
-//'     pixelsSupport: number of pixels with intensity > 0
+//'     pixelsSupport: number of pixels with intensity >= minPixelsSupport
 
 // [[Rcpp::export]]
 List peakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow, float mzHigh, int nThreads)
@@ -111,12 +111,9 @@ PeakMatrix::PeakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params
 
   nv=params["massResolution"];
   m_massResolution=nv[0];
-  
+
   nv=params["minPixelsSupport"];
   m_pxSupport=nv[0]*m_NPixels/100.0;
-  
-  nv=params["maxMassResolution"];
-  m_maxMassResolution=nv[0]; 
   
   cv=params["noiseMethod"];
   String tmpStr=cv[0];
@@ -612,10 +609,10 @@ int PeakMatrix::getGaussians(int px, SPECTRO *spectro_p, GAUSS_PARAMS *gaussians
 //2) Establishes clusters within those ranges (kmeans segmentation).
 //Requires preprocessing by getGaussians()
 //Receives the total mass range to consider.
-//Returns a list: peakMatrix, massVector, pixelsSupport.
+//Returns a list: peakMatrix, massVector, massResolution, pixelsSupport.
 //peakMatrix: Matrix of centroids and the intensity associated with each pixel.
 //massVector: The mz associated with each column of the peakMatrix.
-//pixelsSupport: Number of pixels with intensity > 0.
+//pixelsSupport: Number of pixels with intensity > minPixelsSupport.
 List PeakMatrix::massRangeToCentroids(MASS_RANGE massRangeIn)
 {
   Common common;
@@ -673,6 +670,7 @@ List PeakMatrix::massRangeToCentroids(MASS_RANGE massRangeIn)
   }
   NumericMatrix peakMatrix(m_NPixels, totalIons);  //peak matrix.
   NumericVector massVector(totalIons);              //mass vector.
+  NumericVector massResolution(totalIons);          //mass resolution.
   IntegerVector pixelsSupport(totalIons);           //#Support pixels.
  
   //Each thread contains the chained information of a consecutive part of the ions.
@@ -689,8 +687,9 @@ List PeakMatrix::massRangeToCentroids(MASS_RANGE massRangeIn)
      //This is a consequence of dealing with joined Gaussians.     
      if(localIonEntry_p->mass>lastMass)                 //the masses are ordered.
      {
-       massVector(col)=localIonEntry_p->mass;           //centroid
-       pixelsSupport(col)=localIonEntry_p->size;        //#pixels that support the ion
+       massVector(col)    =localIonEntry_p->mass;           //centroid
+       massResolution(col)=localIonEntry_p->massResolution; //massResolution
+       pixelsSupport(col) =localIonEntry_p->size;        //#pixels that support the ion
        for(int row=0; row<m_NPixels; row++)             //for each pixel
          peakMatrix(row, col)=localIonEntry_p->set[row]; //intensities
        col++;
@@ -701,7 +700,7 @@ List PeakMatrix::massRangeToCentroids(MASS_RANGE massRangeIn)
    }
  }
  
- List ret=List::create(Named("peakMatrix")=peakMatrix, Named("mass")=massVector, Named("pixelsSupport")=pixelsSupport);
+ List ret=List::create(Named("peakMatrix")=peakMatrix, Named("mass")=massVector, Named("massResolution")=massResolution, Named("pixelsSupport")=pixelsSupport);
  return ret;
  }
 
@@ -930,7 +929,7 @@ for(int i=iLow; i<=iHigh; i++)
     int rangeNCenters;
     //Capture of the centroids in the range of masses to be considered.
     rangeNCenters=getCentroidsIntoRange(massRange2, gaussians_p);
-    if(rangeNCenters<m_pxSupport) continue; //minimum size control.
+    if(rangeNCenters<=m_pxSupport) continue; //minimum size control.
 
     //mass vector for the current range.
     for(int i=0; i<rangeNCenters; i++)
@@ -941,10 +940,6 @@ for(int i=iLow; i<=iHigh; i++)
     float convergencia=1e-5;
     
     double massRes=massRange2.low/m_massResolution; //resolution (Da)
-    double minDistance;
-    if(m_maxMassResolution==0) {minDistance=0;} //no peak will be rejected.
-    else
-      {minDistance=massRange2.low/m_maxMassResolution;}//resolution (Da)
     newMassRes=massRes;
     double massResSqr=massRes*massRes; //Da*Da
     int nClusters, iter=0;
@@ -989,21 +984,18 @@ for(int i=iLow; i<=iHigh; i++)
         hit=true;
         //The validity of the obtained clusters is evaluated:
         //All large clusters must have low dispersion.
-        //Large if the cluster >= pxSupport.
         //Low dispersion if it is < mass resolution.
         for(int c=0; c<nClusters; c++) 
         {
           int cPixels=kmeans.m_kStruct.clusters_p[c].data.size; //px that support
           //dispersion measure.
           double res=kmeans.m_kStruct.clusters_p[c].withinss/cPixels; //mean square distance.
-          //res=res*0.9;
-          S=cPixels>=m_pxSupport;         //'1' if group with many support pixels.
           R=res<massResSqr;               //'1' if the group dispersion is low.
-          seg_p[c]=false;                 //deficient group, by default.
-          if(S && R) {seg_p[c]=true;}     //suitable group.
-          else if(S && !R) {hit=false; break;} //requires iteration to improve.
-          //If !S is marked as undersized by default. It is later discarded.
-        }
+          if(R) {seg_p[c]=true;}     //suitable group.
+          else {
+            seg_p[c]=false;         //deficient group, by default.
+            hit=false; break;}      //requires iteration to improve.
+          }
         if(hit) {break;} //all groups of size>minimum have low dispersion.
       }//end for() for nClusters
       
@@ -1011,7 +1003,9 @@ for(int i=iLow; i<=iHigh; i++)
     if(!hit) 
     {
         iter++;
-        if(iter>=maxMasterIter) //limit control. Ensures that it ends.
+      printf("Warning: clustering failed in mass range %.5f/%.5f with %d clusters (maxClusters=%d) %.4f\n", 
+             m_massRange_p[mrIndex].low, m_massRange_p[mrIndex].high, kmeans.m_kStruct.nClusters, maxClustersRange, newMassRes);
+      if(iter>=maxMasterIter) //limit control. Ensures that it ends.
         {
           printf("Warning: clustering failed in mass range %.5f/%.5f with %d clusters (maxClusters=%d)\n", 
                  m_massRange_p[mrIndex].low, m_massRange_p[mrIndex].high, kmeans.m_kStruct.nClusters, maxClustersRange);
@@ -1044,6 +1038,7 @@ for(int i=iLow; i<=iHigh; i++)
 
     common.sortUp(tmpMass_p, tmpIndex_p, kmeans.m_kStruct.nClusters);
 
+/*
     //filter 1: discard poorly supported clusters -> "minPixelsSupport" parameter
     //goodIndex maintains indexes to 'good' clusters
     int goodIndex[kmeans.m_kStruct.nClusters];
@@ -1086,21 +1081,26 @@ for(int i=iLow; i<=iHigh; i++)
         indexA=indexB; //to iterate
       }
     }
-
+*/
     //The results are saved.
     //Memory is created to store the cluster information about the peak array.
     //These are structures linked by pointers so they can grow.
-    for(int c=0; c<goodIndexEndSize; c++)
+    for(int c=0; c<kmeans.m_kStruct.nClusters; c++)
     {
-      int sortIndex=goodIndexEnd[c]; //index to cluster
+      int sortIndex=tmpIndex_p[c]; //index to cluster
+      
+      //filter: discard poorly supported clusters -> "minPixelsSupport" parameter
+      int size=kmeans.m_kStruct.clusters_p[sortIndex].data.size; //cluster size
+      if(size<m_pxSupport) continue;
       
       localIonEntry_p->set=new float[m_NPixels]; //memory for intensities
       for(int i=0; i<m_NPixels; i++) //reset all intensities. 
         localIonEntry_p->set[i]=0.0;
       
       localIonEntry_p->mass=kmeans.m_kStruct.clusters_p[sortIndex].center; //centroide
-      int size=kmeans.m_kStruct.clusters_p[sortIndex].data.size; //cluster size
       localIonEntry_p->size=size; //intensities
+      localIonEntry_p->massResolution=massRange2.low/newMassRes; //resolution (Da)
+
       totalIons++; //input counter (centroides)
       
       for(int i=0; i<size; i++) //copy of intensities

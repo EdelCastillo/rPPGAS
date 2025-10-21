@@ -23,13 +23,12 @@ Specifically, it is a new peak picking algorithm that achieves two goals: high c
 ### **Step 1**.- A list with the necessary parameters is generated.
 
 > For **example**:  
->params\ <-list("massResolution"=30000, "maxMassResolution"=120000, "minPixelsSupport"=5, "SNR"=3,  "SNRmethod"="estnoise_mad");
+>params\ <-list("massResolution"=30000, "minPixelsSupport"=5, "SNR"=3,  "SNRmethod"="estnoise_mad");
 
 **Description of the parameters:**
 
 ```         
-massResolution:     Mass resolution of the spectrometer that analyzed the sample (mz/delta_mz).
-maxMassResolution:  Maximum desired resolution (mz/delta_mz). Excludes centroids that are too close to each other.
+massResolution:     Desired mass resolution for the peak matrix (mz/delta_mz).
 minPixelSupport:    Minimum percentage of pixels that must provide intensity information for each mass (mz).
                     That is, in the peak matrix, the relative number of pixels with non-zero intensity must be equal to or greater than this.
 SNR:                Signal-to-noise ratio. Discards information based on its proximity to the estimated noise level.
@@ -53,7 +52,8 @@ imzML_file_path: Absolute path to the filename with the imzML extension.
        nThreads: Number of threads for parallel processing (if zero, nThreads=maxCores-1)
 
   return a list: 
-   peakMatrix: Matrix of peak (centroids) rows = pixels, columns = intensity of each pixel.
-         mass: Vector with the masses associated with each column of peakMatrix.
-pixelsSupport: Vector with the number of pixels in each column with non-zero intensity.
+    peakMatrix: Matrix of peak (centroids) rows = pixels, columns = intensity of each pixel.
+          mass: Vector with the masses associated with each column of peakMatrix.
+massResolution: Vector with the mass resolution achieved in the peak matrix (mz/delta_mz).
+ pixelsSupport: Vector with the number of pixels in each column with non-zero intensity.
 ```
