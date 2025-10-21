@@ -941,7 +941,10 @@ for(int i=iLow; i<=iHigh; i++)
     float convergencia=1e-5;
     
     double massRes=massRange2.low/m_massResolution; //resolution (Da)
-    double minDistance=massRange2.low/m_maxMassResolution; //resolution (Da)
+    double minDistance;
+    if(m_maxMassResolution==0) {minDistance=0;} //no peak will be rejected.
+    else
+      {minDistance=massRange2.low/m_maxMassResolution;}//resolution (Da)
     newMassRes=massRes;
     double massResSqr=massRes*massRes; //Da*Da
     int nClusters, iter=0;

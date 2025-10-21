@@ -71,12 +71,17 @@ getPeakMatrix<-function(data_file,
   if(!(exists("massResolution", where=params)))
   {
     print("ERROR: massResolution parameter is required.") 
-    return (0);
+    return (0)
   }
-  if(!(exists("maxMassResolution", where=params)))
+  if(params$massResolution<=0)
   {
-    print("warning: by default, maxMassResolution parameter will be equal to massResolution parameter .")
-    params=c(params, "maxMassResolution"=params$massResolution)
+    print("ERROR: massResolution must be greater than zero.") 
+    return (0)
+  }
+  if(!(exists("maxMassResolution", where=params)) | params$maxMassResolution==0)
+  {
+    print("warning: maxMassResolution parameter will be equal to maximun resolution (no peak will be rejected)")
+    params=c(params, "maxMassResolution"=0)
   }
   
   imgData <- NULL
@@ -94,9 +99,7 @@ getPeakMatrix<-function(data_file,
   close_signal = NULL;
   #imzMLRename the image name, if NULL a default name based on the file name will be used.
   imzMLRename  = NULL;
-  #encoding_threads number of threads to use during the pngstream encoding process.
-  encoding_threads = parallel::detectCores();
-  
+
   pt<-proc.time()
 
   fileExtension <- unlist(strsplit(basename(data_file), split = "\\."))
