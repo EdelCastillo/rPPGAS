@@ -2,10 +2,7 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' Generic method for the imzMLreader
-NULL
-
-#' Generic method for the imzMLreader
-#' testingimzMLBinRead
+#' @name imzMLBinReadGeneric
 #' @param ibdFname: full path to the ibd file.
 #' @param NPixels: Total number of pixels in the image.
 #' @param N: number of elemetns (or data point to read).
@@ -14,12 +11,21 @@ NULL
 #' @param continuous: true if imzML data is in continuous mode
 NULL
 
+#' @title Generic method for the imzMLreader
+#' @name imzMLBinReadAllMz
+#' @param ibdFname: full path to the ibd file.
+#' @param NPixels: Total number of pixels in the image.
+#' @param N: number of elemetns (or data point to read).
+#' @param offset: offset in bytes at which the reading operation is started.
+#' @param read_mz: if true m/z data is readed, otherwise intensities are readed.
+#' @param continuous: true if imzML data is in continuous mode
 imzMLBinReadAllMz <- function(ibdFname, imzML) {
     .Call('_rPPGAS_imzMLBinReadAllMz', PACKAGE = 'rPPGAS', ibdFname, imzML)
 }
 
 #' Testing the imzMLwriter in sequential mode
 #' This function creates a new ibd file with the provided data descibed in the following params
+#' @name testingimzMLBinWriteSequential
 #' @param ibdFname: full path to the ibd file.
 #' @param mz_dataTypeString: String to specify the data format used to encode m/z values.
 #' @param int_dataTypeString: String to specify the data format used to encode intensity values.
@@ -30,17 +36,17 @@ imzMLBinReadAllMz <- function(ibdFname, imzML) {
     .Call('_rPPGAS_testingimzMLBinWriteSequential', PACKAGE = 'rPPGAS', ibdFname, mz_dataTypeString, int_dataTypeString, str_uuid, mzArray, intArray)
 }
 
-#' CimzMLBinCreateNewIBD.
 #' This function creates a new ibd file with the provided uuid
+#' @name CimzMLBinCreateNewIBD
 #' @param ibdFname: full path to the ibd file.
 #' @param uuid: 16 bytes long UUID.
 CimzMLBinCreateNewIBD <- function(ibdFname, str_uuid) {
     invisible(.Call('_rPPGAS_CimzMLBinCreateNewIBD', PACKAGE = 'rPPGAS', ibdFname, str_uuid))
 }
 
-#' CimzMLBinAppendMass.
 #' This function appends a new mass axis to a given ibd file.
 #' The last added offset is returned.
+#' @name CimzMLBinAppendMass.
 #' @param ibdFname: full path to the ibd file.
 #' @param mz_dataTypeString:  String to specify the data format used to encode m/z values.
 #' @param mzNew: The mass axis to append.
@@ -48,9 +54,9 @@ CimzMLBinAppendMass <- function(ibdFname, mz_dataTypeString, mzNew) {
     .Call('_rPPGAS_CimzMLBinAppendMass', PACKAGE = 'rPPGAS', ibdFname, mz_dataTypeString, mzNew)
 }
 
-#' CimzMLBinAppendIntensity.
-#' This function appends a new mass axis to a given ibd file.
-#' The last added offset is returned.
+#' @name CimzMLBinAppendIntensity.
+#' @title This function appends a new mass axis to a given ibd file.
+#'        The last added offset is returned.
 #' @param ibdFname: full path to the ibd file.
 #' @param int_dataTypeString:  String to specify the data format used to encode m/z values.
 #' @param intNew: The mass axis to append.
@@ -58,8 +64,9 @@ CimzMLBinAppendIntensity <- function(ibdFname, int_dataTypeString, intNew) {
     .Call('_rPPGAS_CimzMLBinAppendIntensity', PACKAGE = 'rPPGAS', ibdFname, int_dataTypeString, intNew)
 }
 
-#' A method to use the imzMLwriter in modify mode to allow direct modification of mass axes for the calibration
-#' This function modifies data of an ibd file with the following params
+#' @name CimzMLBinWriteModifyMass
+#' @title A method to use the imzMLwriter in modify mode to allow direct modification of mass axes for the calibration
+#'        This function modifies data of an ibd file with the following params
 #' @param ibdFname: full path to the ibd file.
 #' @param NPixels: Total number of pixels in the image.
 #' @param mz_dataTypeString: String to specify the data format used to encode m/z values.
@@ -71,10 +78,8 @@ CimzMLBinWriteModifyMass <- function(ibdFname, NPixels, mz_dataTypeString, int_d
     invisible(.Call('_rPPGAS_CimzMLBinWriteModifyMass', PACKAGE = 'rPPGAS', ibdFname, NPixels, mz_dataTypeString, int_dataTypeString, continuous, mzNew, mzOffset))
 }
 
-#' CimzMLBinReadMass.
-#' 
-#' Reads a single mass axis from the imzML file.
-#' 
+#' @name CimzMLBinReadMass.
+#' @title Reads a single mass axis from the imzML file.
 #' @param ibdFname: full path to the ibd file.
 #' @param NPixels: Total number of pixels in the image.
 #' @param N: number of elemetns (or data point to read).
@@ -84,10 +89,8 @@ CimzMLBinReadMass <- function(ibdFname, NPixels, N, offset, dataTypeString, cont
     .Call('_rPPGAS_CimzMLBinReadMass', PACKAGE = 'rPPGAS', ibdFname, NPixels, N, offset, dataTypeString, continuous)
 }
 
-#' CimzMLBinReadIntensity.
-#' 
-#' Reads a single mass axis from the imzML file.
-#' 
+#' @name CimzMLBinReadIntensity.
+#' @title Reads a single mass axis from the imzML file.
 #' @param ibdFname: full path to the ibd file.
 #' @param NPixels: Total number of pixels in the image.
 #' @param N: number of elemetns (or data point to read).
@@ -97,8 +100,8 @@ CimzMLBinReadIntensity <- function(ibdFname, NPixels, N, offset, dataTypeString,
     .Call('_rPPGAS_CimzMLBinReadIntensity', PACKAGE = 'rPPGAS', ibdFname, NPixels, N, offset, dataTypeString, continuous)
 }
 
-#' Method to read a peak list from an imzML file. Processed mode is assumed.
-#' testingimzMLBinRead
+#' @title Method to read a peak list from an imzML file. Processed mode is assumed.
+#' @name CimzMLReadPeakList
 #' @param ibdFname: full path to the ibd file.
 #' @param imzML_peakList_descriptor: imzML file description as it is returned by the CimzMLParse() function.
 #' @param PixelID: the pixel ID to read a peak list.
@@ -106,37 +109,51 @@ CimzMLReadPeakList <- function(ibdFname, imzML_peakList_descriptor, PixelID) {
     .Call('_rPPGAS_CimzMLReadPeakList', PACKAGE = 'rPPGAS', ibdFname, imzML_peakList_descriptor, PixelID)
 }
 
-#' Method to overwrite the UUID of an imzML ibd file.
-#' testingimzMLBinRead
+#' @title Method to overwrite the UUID of an imzML ibd file.
+#' @name overwriteIbdUUid
 #' @param ibdFname: full path to the ibd file.
 #' @param newUUID: the new uuid as a string.
 overwriteIbdUUid <- function(ibdFname, newUUID) {
     invisible(.Call('_rPPGAS_overwriteIbdUUid', PACKAGE = 'rPPGAS', ibdFname, newUUID))
 }
 
-#' Cload_imzMLSpectra
-#' Load spectra into a Matrix object interpolating to the common mass axis when necessary.
+#' @name Cload_imzMLSpectra
+#' @title Load spectra into a Matrix object interpolating to the common mass axis when necessary.
 #' @param rMSIobj: an rMSI object prefilled with a parsed imzML.
 #' @param pixelIDs: pixel ID's of the spectra to load in C-style indexing (starting at 0).
 #' @param commonMassAxis: a common mass axis that may be different than the mass axis in the rMSI object.
 #' @param number_of_threads: number of thread to use during interpolation
+#'
 Cload_imzMLSpectra <- function(rMSIobj, pixelIDs, commonMassAxis, number_of_threads) {
     .Call('_rPPGAS_Cload_imzMLSpectra', PACKAGE = 'rPPGAS', rMSIobj, pixelIDs, commonMassAxis, number_of_threads)
 }
 
-#' Cload_imzMLImages
-#' Load images
+#' @name Cload_imzMLImages
+#' @title Load images
 #' @param rMSIobj: an rMSI object prefilled with a parsed imzML.
 #' @param pixelIDs: pixel ID's of the spectra to load in C-style indexing (starting at 0).
 #' @param maxIndex: mass index range to load
 #' @param commonMassAxis: a common mass axis that may be different than the mass axis in the rMSI object.
 #' @param number_of_threads: number of thread to use during interpolation
-#' @Return a matrix
+#' @return a matrix
 #' 
 Cload_imzMLImages <- function(rMSIobj, pixelIDs, massIndex, commonMassAxis, number_of_threads) {
     .Call('_rPPGAS_Cload_imzMLImages', PACKAGE = 'rPPGAS', rMSIobj, pixelIDs, massIndex, commonMassAxis, number_of_threads)
 }
 
+#' @name CimzMLParse
+#' @title  imzML resulting data structure:
+#' @param xml_path: full path to imzML file
+#' @return 
+#' UUID: a String object with the UUID
+#' continuous_mode: a boolean which is true if spectra in continuous mode
+#' compression_mz: a boolean indicating wheher data is compressed or not
+#' compression_int: a boolean indicating wheher data is compressed or not
+#' mz_dataType: a String with the data type: "float", "int"... etc...
+#' int_dataType: a String with the data type: "float", "int"... etc...
+#' pixel_size_um: a double with the pixel area? check this...
+#' run_data: a data.frane with the columns: x, y, mzLength, mzOffset, intLength, intOffset
+#'
 CimzMLParse <- function(xml_path) {
     .Call('_rPPGAS_CimzMLParse', PACKAGE = 'rPPGAS', xml_path)
 }
@@ -145,9 +162,10 @@ CimzMLStore <- function(fname, imgInfo, mass_spectrometer_file_format = "rMSI ex
     .Call('_rPPGAS_CimzMLStore', PACKAGE = 'rPPGAS', fname, imgInfo, mass_spectrometer_file_format)
 }
 
-#'  peakMatrix() link with R.
-#'  converts the info in the imzML file into a peak matrix.
-#' 
+#'
+#'  @name peakMatrix
+#'  @title converts the info in the imzML file into a peak matrix.
+#'  
 #'  @param ibdFname  absolute reference to the file with the ibd extension.
 #'  @param imzML  list with information extracted from the imzML file with import_imzML()
 #'  @param params specific parameters
@@ -157,14 +175,13 @@ CimzMLStore <- function(fname, imgInfo, mass_spectrometer_file_format = "rMSI ex
 #'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 #'  @param mzLow  lower mass to consider
 #'  @param mzHigh higher mass to consider
-#'  @nThreads number of threads suggested for parallel processing.
+#'  @param nThreads number of threads suggested for parallel processing.
 #'  @return lista: peakMatrix, massVector, massResolution, pixelsSupport
 #'     peakMatrix: matrix of centroids and the intensity associated with each pixel.
 #'     massResolution: 
 #'     massVector: the mz associated with each column of peakmatrix.
 #'     pixelsSupport: number of pixels with intensity >= minPixelsSupport
-NULL
-
+#'     
 peakMatrix <- function(ibdFname, imzML, params, mzLow, mzHigh, nThreads) {
     .Call('_rPPGAS_peakMatrix', PACKAGE = 'rPPGAS', ibdFname, imzML, params, mzLow, mzHigh, nThreads)
 }

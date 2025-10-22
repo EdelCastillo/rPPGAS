@@ -28,17 +28,19 @@
 using namespace Rcpp;
 using namespace pugi;
 
-// imzML resulting data structure:
-// $UUID a String object with the UUID
-// $continuous_mode a boolean which is true if spectra in continuous mode
-// $compression_mz a boolean indicating wheher data is compressed or not
-// $compression_int a boolean indicating wheher data is compressed or not
-// $mz_dataType a String with the data type: "float", "int"... etc...
-// $int_dataType a String with the data type: "float", "int"... etc...
-// $pixel_size_um a double with the pixel area? check this...
-// $run_data a data.frane with the columns: x, y, mzLength, mzOffset, intLength, intOffset
-//
-// full path to xml_path must be specified... R function path.expand() can be used 4 this
+//' @name CimzMLParse
+//' @title  imzML resulting data structure:
+//' @param xml_path: full path to imzML file
+//' @return 
+//' UUID: a String object with the UUID
+//' continuous_mode: a boolean which is true if spectra in continuous mode
+//' compression_mz: a boolean indicating wheher data is compressed or not
+//' compression_int: a boolean indicating wheher data is compressed or not
+//' mz_dataType: a String with the data type: "float", "int"... etc...
+//' int_dataType: a String with the data type: "float", "int"... etc...
+//' pixel_size_um: a double with the pixel area? check this...
+//' run_data: a data.frane with the columns: x, y, mzLength, mzOffset, intLength, intOffset
+//'
 // [[Rcpp::export]]
 List CimzMLParse( String xml_path )
 {

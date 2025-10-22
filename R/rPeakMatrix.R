@@ -16,10 +16,10 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #********************************************************************************/
   
-#' getPeakMatrix()
-#' obtains the peak matrix from imzML files.
+#' @name getPeakMatrix
+#' @title obtains the peak matrix from imzML files.
 #' @param data_file: absolute reference to the file with the imzML extension.
-#' @param params  specific parameters
+#' @param params  
 #'      "massResolution": mass resolution with which the spectra were acquired.
 #'                 "SNR": signal-to-noise ratio
 #'         "noiseMethod": method for estimating noise.
@@ -34,7 +34,7 @@
 #' @return a list: 
 #'   peakMatrix: Matrix of peak (centroids) rows = pixels, columns = intensity of each pixel.
 #'         mass: Vector with the masses associated with each column of peakMatrix.
-#'pixelsSupport: Vector with the number of pixels in each column with non-zero intensity.#' @return an rMSI object pointing to ramdisk stored data
+#'pixelsSupport: Vector with the number of pixels in each column with non-zero intensity. 
 #'
 #' @export
 getPeakMatrix<-function(data_file,

@@ -1019,9 +1019,15 @@ void ImzMLBinWrite::writeDataCommon(unsigned int N, double* ptr, unsigned int da
 
 ///R METHODS////////////////////////////////////////////////////////////////////////
 
-//' Generic method for the imzMLreader
-   //' testingimzMLBinRead
-// [[Rcpp::export]]
+//' @title Generic method for the imzMLreader
+//' @name imzMLBinReadAllMz
+//' @param ibdFname: full path to the ibd file.
+//' @param NPixels: Total number of pixels in the image.
+//' @param N: number of elemetns (or data point to read).
+//' @param offset: offset in bytes at which the reading operation is started.
+//' @param read_mz: if true m/z data is readed, otherwise intensities are readed.
+//' @param continuous: true if imzML data is in continuous mode
+   // [[Rcpp::export]]
 Rcpp::NumericVector imzMLBinReadAllMz(const char* ibdFname, Rcpp::List imzML)
    {
     Rcpp::DataFrame df;
@@ -1071,7 +1077,7 @@ Rcpp::NumericVector imzMLBinReadAllMz(const char* ibdFname, Rcpp::List imzML)
    }
 
 //' Generic method for the imzMLreader
-//' testingimzMLBinRead
+//' @name imzMLBinReadGeneric
 //' @param ibdFname: full path to the ibd file.
 //' @param NPixels: Total number of pixels in the image.
 //' @param N: number of elemetns (or data point to read).
@@ -1105,6 +1111,7 @@ Rcpp::NumericVector imzMLBinReadGeneric(const char* ibdFname, unsigned int NPixe
 
 //' Testing the imzMLwriter in sequential mode
 //' This function creates a new ibd file with the provided data descibed in the following params
+//' @name testingimzMLBinWriteSequential
 //' @param ibdFname: full path to the ibd file.
 //' @param mz_dataTypeString: String to specify the data format used to encode m/z values.
 //' @param int_dataTypeString: String to specify the data format used to encode intensity values.
@@ -1162,8 +1169,8 @@ Rcpp::DataFrame testingimzMLBinWriteSequential(const char* ibdFname, Rcpp::Strin
   return NULL;
 }
 
-//' CimzMLBinCreateNewIBD.
 //' This function creates a new ibd file with the provided uuid
+//' @name CimzMLBinCreateNewIBD
 //' @param ibdFname: full path to the ibd file.
 //' @param uuid: 16 bytes long UUID.
 // [[Rcpp::export]]
@@ -1182,9 +1189,9 @@ void CimzMLBinCreateNewIBD(const char* ibdFname, Rcpp::String str_uuid)
   }
 }
 
-//' CimzMLBinAppendMass.
 //' This function appends a new mass axis to a given ibd file.
 //' The last added offset is returned.
+//' @name CimzMLBinAppendMass.
 //' @param ibdFname: full path to the ibd file.
 //' @param mz_dataTypeString:  String to specify the data format used to encode m/z values.
 //' @param mzNew: The mass axis to append.
@@ -1205,9 +1212,9 @@ uint64_t CimzMLBinAppendMass(const char* ibdFname, Rcpp::String mz_dataTypeStrin
    return 0;
 }
 
-//' CimzMLBinAppendIntensity.
-//' This function appends a new mass axis to a given ibd file.
-//' The last added offset is returned.
+//' @name CimzMLBinAppendIntensity.
+//' @title This function appends a new mass axis to a given ibd file.
+//'        The last added offset is returned.
 //' @param ibdFname: full path to the ibd file.
 //' @param int_dataTypeString:  String to specify the data format used to encode m/z values.
 //' @param intNew: The mass axis to append.
@@ -1228,8 +1235,9 @@ uint64_t CimzMLBinAppendIntensity(const char* ibdFname, Rcpp::String int_dataTyp
   return 0;
 }
 
-//' A method to use the imzMLwriter in modify mode to allow direct modification of mass axes for the calibration
-//' This function modifies data of an ibd file with the following params
+//' @name CimzMLBinWriteModifyMass
+//' @title A method to use the imzMLwriter in modify mode to allow direct modification of mass axes for the calibration
+//'        This function modifies data of an ibd file with the following params
 //' @param ibdFname: full path to the ibd file.
 //' @param NPixels: Total number of pixels in the image.
 //' @param mz_dataTypeString: String to specify the data format used to encode m/z values.
@@ -1253,10 +1261,8 @@ void CimzMLBinWriteModifyMass(const char* ibdFname, unsigned int NPixels, Rcpp::
   }
 }
 
-//' CimzMLBinReadMass.
-//' 
-//' Reads a single mass axis from the imzML file.
-//' 
+//' @name CimzMLBinReadMass.
+//' @title Reads a single mass axis from the imzML file.
 //' @param ibdFname: full path to the ibd file.
 //' @param NPixels: Total number of pixels in the image.
 //' @param N: number of elemetns (or data point to read).
@@ -1268,10 +1274,8 @@ Rcpp::NumericVector CimzMLBinReadMass(const char* ibdFname, unsigned int NPixels
   return imzMLBinReadGeneric(ibdFname, NPixels, N, offset, dataTypeString, true, continuous);
 }
 
-//' CimzMLBinReadIntensity.
-//' 
-//' Reads a single mass axis from the imzML file.
-//' 
+//' @name CimzMLBinReadIntensity.
+//' @title Reads a single mass axis from the imzML file.
 //' @param ibdFname: full path to the ibd file.
 //' @param NPixels: Total number of pixels in the image.
 //' @param N: number of elemetns (or data point to read).
@@ -1283,8 +1287,8 @@ Rcpp::NumericVector CimzMLBinReadIntensity(const char* ibdFname, unsigned int NP
   return imzMLBinReadGeneric(ibdFname, NPixels, N, offset, dataTypeString, false, continuous);
 }
 
-//' Method to read a peak list from an imzML file. Processed mode is assumed.
-//' testingimzMLBinRead
+//' @title Method to read a peak list from an imzML file. Processed mode is assumed.
+//' @name CimzMLReadPeakList
 //' @param ibdFname: full path to the ibd file.
 //' @param imzML_peakList_descriptor: imzML file description as it is returned by the CimzMLParse() function.
 //' @param PixelID: the pixel ID to read a peak list.
@@ -1356,8 +1360,8 @@ Rcpp::List CimzMLReadPeakList(const char* ibdFname, Rcpp::List imzML_peakList_de
   }
 }
 
-//' Method to overwrite the UUID of an imzML ibd file.
-//' testingimzMLBinRead
+//' @title Method to overwrite the UUID of an imzML ibd file.
+//' @name overwriteIbdUUid
 //' @param ibdFname: full path to the ibd file.
 //' @param newUUID: the new uuid as a string.
 // [[Rcpp::export]]
@@ -1377,12 +1381,13 @@ void overwriteIbdUUid(const char* ibdFname, Rcpp::String newUUID)
 
 #define SPECTRA_BUFFER_MB 1024 //I think 1024 MB of RAM is a good limit for spectra loading
 
-//' Cload_imzMLSpectra
-//' Load spectra into a Matrix object interpolating to the common mass axis when necessary.
+//' @name Cload_imzMLSpectra
+//' @title Load spectra into a Matrix object interpolating to the common mass axis when necessary.
 //' @param rMSIobj: an rMSI object prefilled with a parsed imzML.
 //' @param pixelIDs: pixel ID's of the spectra to load in C-style indexing (starting at 0).
 //' @param commonMassAxis: a common mass axis that may be different than the mass axis in the rMSI object.
 //' @param number_of_threads: number of thread to use during interpolation
+//'
 // [[Rcpp::export]]
 Rcpp::NumericMatrix Cload_imzMLSpectra(Rcpp::List rMSIobj, Rcpp::IntegerVector pixelIDs, Rcpp::NumericVector commonMassAxis, unsigned int number_of_threads)
 {
@@ -1446,14 +1451,14 @@ Rcpp::NumericMatrix Cload_imzMLSpectra(Rcpp::List rMSIobj, Rcpp::IntegerVector p
   return m_spc;
 }
 
-//' Cload_imzMLImages
-//' Load images
+//' @name Cload_imzMLImages
+//' @title Load images
 //' @param rMSIobj: an rMSI object prefilled with a parsed imzML.
 //' @param pixelIDs: pixel ID's of the spectra to load in C-style indexing (starting at 0).
 //' @param maxIndex: mass index range to load
 //' @param commonMassAxis: a common mass axis that may be different than the mass axis in the rMSI object.
 //' @param number_of_threads: number of thread to use during interpolation
-//' @Return a matrix
+//' @return a matrix
 //' 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix Cload_imzMLImages(Rcpp::List rMSIobj, Rcpp::IntegerVector pixelIDs, Rcpp::IntegerVector massIndex, Rcpp::NumericVector commonMassAxis, unsigned int number_of_threads)

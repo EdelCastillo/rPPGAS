@@ -20,9 +20,12 @@
 
 int  globalPeak=0, globalCount=0; //contadores de picos
 
-//'  peakMatrix() link with R.
-//'  converts the info in the imzML file into a peak matrix.
-//' 
+/// R METHOD ////////////////////////////////////////////////////////////////////////
+
+//'
+//'  @name peakMatrix
+//'  @title converts the info in the imzML file into a peak matrix.
+//'  
 //'  @param ibdFname  absolute reference to the file with the ibd extension.
 //'  @param imzML  list with information extracted from the imzML file with import_imzML()
 //'  @param params specific parameters
@@ -32,13 +35,13 @@ int  globalPeak=0, globalCount=0; //contadores de picos
 //'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
 //'  @param mzLow  lower mass to consider
 //'  @param mzHigh higher mass to consider
-//'  @nThreads number of threads suggested for parallel processing.
+//'  @param nThreads number of threads suggested for parallel processing.
 //'  @return lista: peakMatrix, massVector, massResolution, pixelsSupport
 //'     peakMatrix: matrix of centroids and the intensity associated with each pixel.
 //'     massResolution: 
 //'     massVector: the mz associated with each column of peakmatrix.
 //'     pixelsSupport: number of pixels with intensity >= minPixelsSupport
-
+//'     
 // [[Rcpp::export]]
 List peakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow, float mzHigh, int nThreads)
 {

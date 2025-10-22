@@ -50,7 +50,7 @@ public:
   
   //Constructor
   //captures input information, allocates memory and initializes.
-  PeakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow=0, float mzHigh=0, int nThreads=0);
+ PeakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow=0, float mzHigh=0, int nThreads=0);
   
   //destructor
   //free reserved memory
