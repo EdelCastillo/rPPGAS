@@ -1,6 +1,7 @@
 /*************************************************************************
- *     rMSI - R package for MSI data processing
- *     Copyright (C) 2019 Pere Rafols Soler
+ *     common_methods 
+ *     rPPGAS - R package for MSI data processing
+ *     Copyright (C) 2025 Esteban del Castillo Pérez (esteban.delcastillo@urv.cat)
  * 
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -36,26 +37,69 @@ class Common
 {
 public:
   Common();
+  //TIC Normalization
   bool TICnormalization(float *vect, int size);
+  
+  //ascending ordering of doubles values.
   int sortUp  (double *bufferIn, int *sort, int size);
+  
+  //descending ordering of doubles values.
   int sortDown(double *bufferIn, int *sort, int size);
+  
+  //ascending ordering of floats values.
   int sortUpF  (float *bufferIn, int *sort, int size);
+  
+  //descending ordering of floats values.
   int sortDownF(float* bufferIn, int *sort, int size);
+  
+  //returns the index to data closest to value.
   int nearestIndex(float value, float *data, int size);
-  int nearestIndexDown(float value, float *data, int size);
+  
+  //returns the index to data closest to value.
   int nearestIndex(double value, double *data, int size);
-  int nearestIndexGaussians(float value, GAUSS_PARAMS *data, int size);
+  
+  //Returns the index of data closest to value
+  //If nearest== 1, returns the nearest above
+  //If nearest==-1, returns the nearest below
+  //If nearest== 0, returns the nearest
+  int nearestIndexGaussians(float value, GAUSS_PARAMS *data, int size, int nearest);
+  
+  //returns the index to data.low closest to value.
   int nearestIndexMassRangeLow(float value, MASS_RANGE *data, int size);
+  
+  //returns the index to data.high closest to value.
   int nearestIndexMassRangeHigh(float value, MASS_RANGE *data, int size);
+  
+  //Returns the median.
+  //If the data has an even length, the average of the two middle values is returned.
   float median(double *data, int size);
+  
+  //Returns the median.
+  //If the data has an even length, the average of the two middle values is returned.
   float medianF(float *data, int size);
+  
+  //average value of an array of floats.
   float meanF(float *A, int size);
+  
+  //average value of an array of doubles
   double mean(double *A, int size);
+  
+  //average value of an array of floats.
   float meanF(float *prob, float *data, int size);
+  
+  //average value of an array of doubles
   double mean(double *prob, double *data, int size);
+  
+  //variance of an array of floats.
   float varF(float *A, int size, float *mean=NULL);
+  
+  //variance of an array of double
   double var(double *A, int size, double *mean=NULL);
+  
+  //variance of an array of doubles
   double var(double *prob, double *data, int size, double *mean_p=NULL);
+  
+  //variance of an array of floats.
   float varF(float *prob, float *data, int size, float *mean_p=NULL);
 };
   

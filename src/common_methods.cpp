@@ -1,6 +1,7 @@
 /*************************************************************************
- *     rMSI - R package for MSI data processing
- *     Copyright (C) 2019 Pere Rafols Soler
+ *     common_methods 
+ *     rPPGAS - R package for MSI data processing
+ *     Copyright (C) 2025 Esteban del Castillo Pérez (esteban.delcastillo@urv.cat)
  * 
  *     This program is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -18,6 +19,7 @@
 
 #include "common_methods.h"
 
+//for data ordenation
 struct
 {
   bool operator()(int a, int b) const { return a > b; }
@@ -59,19 +61,20 @@ std::string parse_xml_uuid(std::string uuid)
 
 Common::Common(){}
 
-//Normalización por TIC
+//TIC Normalization
 bool Common::TICnormalization(float *vect, int size)
 {
   double suma=0;
   for(int i=0; i<size; i++)
     suma+=vect[i];
   suma/=1e6;
-  if(suma<1e-10) return(false); //errors control
+  if(suma<1e-10) return(false); //error control
   for(int i=0; i<size; i++)
     vect[i]/=suma;
   return(true);
 }
 
+//ascending ordering of doubles values.
 int Common::sortUp(double *bufferIn, int *index, int size) 
 {
   if(index)
@@ -84,6 +87,7 @@ int Common::sortUp(double *bufferIn, int *index, int size)
   return 0;
 }
 
+//descending ordering of doubles values.
 int Common::sortDown(double *bufferIn, int *index, int size) 
 {
   if(index)
@@ -96,6 +100,7 @@ int Common::sortDown(double *bufferIn, int *index, int size)
   return 0;
 }
 
+//ascending ordering of floats values.
 int Common::sortUpF(float *bufferIn, int *index, int size) 
 {
   if(index)
@@ -108,6 +113,7 @@ int Common::sortUpF(float *bufferIn, int *index, int size)
   return 0;
 }
 
+//descending ordering of floats values.
 int Common::sortDownF(float *bufferIn, int *index, int size) 
 {
   if(index)
@@ -121,7 +127,7 @@ int Common::sortDownF(float *bufferIn, int *index, int size)
 }
 
 
-//retorna el índice a data más próximo a value
+//returns the index to data closest to value.
 int Common::nearestIndex(float value, float *data, int size)
 {
 //  printf("[%.1f]->", value); for(int i=0; i<size; i++) printf("%.1f ", data[i]); printf("\n");    
@@ -130,7 +136,7 @@ int Common::nearestIndex(float value, float *data, int size)
   int indexCenter;
   
   if(indexHigh==indexLow) return 0;
-  if(indexHigh==indexLow+1) //retorna el más próximo
+  if(indexHigh==indexLow+1) //the nearest one returns.
   {
     if(value-data[indexLow] <= data[indexHigh]-value) return indexLow;
     else return indexHigh;
@@ -153,7 +159,7 @@ int Common::nearestIndex(float value, float *data, int size)
   }
 }
 
-//retorna el índice a data más próximo a value
+//returns the index to data closest to value.
 int Common::nearestIndex(double value, double *data, int size)
 {
   int indexLow=0;
@@ -161,7 +167,7 @@ int Common::nearestIndex(double value, double *data, int size)
   int indexCenter;
   
   if(indexHigh==indexLow) return 0;
-  if(indexHigh==indexLow+1) //retorna el más próximo
+  if(indexHigh==indexLow+1) //the nearest one returns.
   {
     if(value-data[indexLow] <= data[indexHigh]-value) return indexLow;
     else return indexHigh;
@@ -184,38 +190,49 @@ int Common::nearestIndex(double value, double *data, int size)
   }
 }
 
-//retorna el índice a data más próximo a value
-int Common::nearestIndexGaussians(float value, GAUSS_PARAMS *data, int size)
+//Returns the index of data closest to value
+//If nearest== 1, returns the nearest above
+//If nearest==-1, returns the nearest below
+//If nearest== 0, returns the nearest
+int Common::nearestIndexGaussians(float value, GAUSS_PARAMS *data, int size, int nearest)
 {
   int indexLow=0;
   int indexHigh=size-1;
   int indexCenter;
-  
+
   if(indexHigh==indexLow) return 0;
-  if(indexHigh==indexLow+1) //retorna el más próximo
+  if(indexHigh==indexLow+1)
   {
-    if(value-data[indexLow].mean <= data[indexHigh].mean-value) return indexLow;
-    else return indexHigh;
-  }
-  
-  if(value<=data[indexLow].mean)       return indexLow;
-  else if(value>=data[indexHigh].mean) return indexHigh;
-  
-  while(1)
-  {
-    indexCenter=round((indexHigh+indexLow)/2);
-    if(value==data[indexCenter].mean) return indexCenter;
-    if(value<data[indexCenter].mean) indexHigh=indexCenter; 
-    else indexLow=indexCenter;
-    if(indexHigh==indexLow+1)
+    if(nearest==1) return indexHigh;
+    else if(nearest==-1) return indexLow;
+    else
     {
       if(value-data[indexLow].mean <= data[indexHigh].mean-value) return indexLow;
       else return indexHigh;
     }
   }
+  
+  while(1)
+  {
+    indexCenter=round((indexHigh+indexLow)/2.0);
+    if(value==data[indexCenter].mean) return indexCenter;
+    if(value<data[indexCenter].mean) indexHigh=indexCenter; 
+    else indexLow=indexCenter;
+  if(indexHigh==indexLow) return indexLow;
+  else if(indexHigh==indexLow+1)
+    {
+      if(nearest==1) return indexHigh;
+      else if(nearest==-1) return indexLow;
+      else
+      {
+        if(value-data[indexLow].mean <= data[indexHigh].mean-value) return indexLow;
+        else return indexHigh;
+      }
+    }
+  }
 }
 
-//retorna el índice a data.low más próximo a value
+//returns the index to data.low closest to value.
 int Common::nearestIndexMassRangeLow(float value, MASS_RANGE *data, int size)
 {
   int indexLow=0;
@@ -223,7 +240,7 @@ int Common::nearestIndexMassRangeLow(float value, MASS_RANGE *data, int size)
   int indexCenter;
   
   if(indexHigh==indexLow) return 0;
-  if(indexHigh==indexLow+1) //retorna el más próximo
+  if(indexHigh==indexLow+1) //the nearest one returns.
   {
     if(value-data[indexLow].low <= data[indexHigh].low-value) return indexLow;
     else return indexHigh;
@@ -234,7 +251,7 @@ int Common::nearestIndexMassRangeLow(float value, MASS_RANGE *data, int size)
   
   while(1)
   {
-    indexCenter=round((indexHigh+indexLow)/2);
+    indexCenter=round((indexHigh+indexLow)/2.0);
     if(value==data[indexCenter].low) return indexCenter;
     if(value<data[indexCenter].low) indexHigh=indexCenter; 
     else indexLow=indexCenter;
@@ -246,7 +263,7 @@ int Common::nearestIndexMassRangeLow(float value, MASS_RANGE *data, int size)
   }
 }
 
-//retorna el índice a data.high más próximo a value
+//returns the index to data.high closest to value.
 int Common::nearestIndexMassRangeHigh(float value, MASS_RANGE *data, int size)
 {
   int indexLow=0;
@@ -254,7 +271,7 @@ int Common::nearestIndexMassRangeHigh(float value, MASS_RANGE *data, int size)
   int indexCenter;
   
   if(indexHigh==indexLow) return 0;
-  if(indexHigh==indexLow+1) //retorna el más próximo
+  if(indexHigh==indexLow+1) //the nearest one returns
   {
     if(value-data[indexLow].high <= data[indexHigh].high-value) return indexLow;
     else return indexHigh;
@@ -265,7 +282,7 @@ int Common::nearestIndexMassRangeHigh(float value, MASS_RANGE *data, int size)
   
   while(1)
   {
-    indexCenter=round((indexHigh+indexLow)/2);
+    indexCenter=round((indexHigh+indexLow)/2.0);
     if(value==data[indexCenter].high) return indexCenter;
     if(value<data[indexCenter].high) indexHigh=indexCenter; 
     else indexLow=indexCenter;
@@ -277,22 +294,22 @@ int Common::nearestIndexMassRangeHigh(float value, MASS_RANGE *data, int size)
   }
 }
 
-//retorna la mediana
-//si data tiene longitud par, se retorna el valor promediado entre los dos valores centrales
+//Returns the median.
+//If the data has an even length, the average of the two middle values is returned.
 float Common::median(double *data, int size)
 {
   if (size<=0) return -1;
   double median;
-  int half=size/2; //si par, se queda con el valor inferior
+  int half=size/2; //If even, it keeps the lower value.
   double *tmpData=0;
   tmpData=new double[size];
-  for(int i=0; i<size; i++) //copia, dado que sort() destruye el origen
+  for(int i=0; i<size; i++) //copy, since sort() destroys the origin.
     tmpData[i]=data[i];
-  sortUp(tmpData, 0, size); //ordenación creciente
+  sortUp(tmpData, 0, size); //increasing order.
   
-  if(!(size%2)) {//si par
+  if(!(size%2)) {//if even
     if(half>0)
-    {median=(tmpData[half]+tmpData[half-1])/2.0;} //valor medio
+    {median=(tmpData[half]+tmpData[half-1])/2.0;} //average value
     else {median=tmpData[0];}
   }
   else
@@ -300,22 +317,23 @@ float Common::median(double *data, int size)
   if(tmpData) delete []tmpData;
   return median;
 }
-//retorna la mediana
-//si data tiene longitud par, se retorna el valor promediado entre los dos valores centrales
+
+//Returns the median.
+//If the data has an even length, the average of the two middle values is returned.
 float Common::medianF(float *data, int size)
 {
   if (size<=0) return -1;
   float median;
-  int half=size/2; //si par, se queda con el valor inferior
+  int half=size/2; //If even, it keeps the lower value.
   float *tmpData=0;
   tmpData=new float[size];
-  for(int i=0; i<size; i++) //copia, dado que sort() destruye el origen
+  for(int i=0; i<size; i++) //copy, since sort() destroys the origin.
     tmpData[i]=data[i];
-  sortUpF(tmpData, 0, size); //ordenación creciente
+  sortUpF(tmpData, 0, size); //increasing order.
   
-  if(!(size%2)) {//si par
+  if(!(size%2)) {//if even
     if(half>0)
-    {median=(tmpData[half]+tmpData[half-1])/2.0;} //valor medio
+    {median=(tmpData[half]+tmpData[half-1])/2.0;} //average value
     else {median=tmpData[0];}
   }
   else
@@ -324,7 +342,7 @@ float Common::medianF(float *data, int size)
   return median;
 }
 
-//valor medio de un array de floats
+//average value of an array of floats.
 float Common::meanF(float *A, int size)
 {
   float S=0;
@@ -334,7 +352,7 @@ float Common::meanF(float *A, int size)
   return S/size;
 }
 
-//valor medio de un array de doubles
+//average value of an array of doubles
 double Common::mean(double *A, int size)
 {
   double S=0;
@@ -344,7 +362,7 @@ double Common::mean(double *A, int size)
   return S/size;
 }
 
-//valor medio de un array de doubles
+//average value of an array of doubles
 double Common::mean(double *prob, double *data, int size)
 {
   double S=0;   
@@ -354,7 +372,7 @@ double Common::mean(double *prob, double *data, int size)
   return S;
 }
 
-//valor medio de un array de floats
+//average value of an array of floats.
 float Common::meanF(float *prob, float *data, int size)
 {
   float S=0;   
@@ -364,7 +382,7 @@ float Common::meanF(float *prob, float *data, int size)
   return S;
 }
 
-//varianza de un array de floats
+//variance of an array of floats.
 float Common::varF(float *A, int size, float *mean_p)
 {
   float m;
@@ -378,7 +396,7 @@ float Common::varF(float *A, int size, float *mean_p)
   return S/size;
 }
 
-//varianza de un array de double
+//variance of an array of double
 double Common::var(double *A, int size, double *mean_p)
 {
   double m;
@@ -393,7 +411,7 @@ double Common::var(double *A, int size, double *mean_p)
   return S/size;
 }
 
-//varianza de un array de double
+//variance of an array of doubles
 double Common::var(double *prob, double *data, int size, double *mean_p)
 {
   double m;
@@ -408,7 +426,7 @@ double Common::var(double *prob, double *data, int size, double *mean_p)
   return S;
 }
 
-//varianza de un array de floats
+//variance of an array of floats.
 float Common::varF(float *prob, float *data, int size, float *mean_p)
 {
   float m;

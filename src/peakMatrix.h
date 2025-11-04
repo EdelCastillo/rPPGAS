@@ -118,7 +118,7 @@ private:
   //massRange: Mass range from which to extract the Gaussians.
   //gaussians_p: Requested Gaussians.
   //Returns the number of Gaussians.
-  int getCentroidsIntoRange(MASS_RANGE massRange, float **gaussians_p);
+  int getCentroidsIntoRange(MASS_RANGE massRange, float **gaussians_p, int size);
   
   //getRawInfo()
   //Loads the full spectrum information associated with a pixel from an imzML file.

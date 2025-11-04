@@ -711,18 +711,54 @@ List PeakMatrix::massRangeToCentroids(MASS_RANGE massRangeIn)
 //Extracts the existing Gaussians within a mass range from the information in m_gaussians_p.
 //massRange: Mass range from which to extract the Gaussians.
 //gaussians_p: Requested Gaussians.
+//size: size of reserved memory.
 //Returns the number of Gaussians.
-int PeakMatrix::getCentroidsIntoRange(MASS_RANGE massRange, float **gaussians_p)
+int PeakMatrix::getCentroidsIntoRange(MASS_RANGE massRange, float **gaussians_p, int size)
 {
-  int count=0, count2=0;
+  int count=0;
+  Common tools;
+  bool hit=false;
+  int iLow, iHigh;
+  
   for(int px=0; px<m_NPixels; px++)//for all pixels
-  {
-    if(m_gaussians_p[px].gauss_p==0) continue; //pixel without Gaussians
-    for(int i=0 ; i<m_gaussians_p[px].size; i++) //improve!!!!
     {
+    if(m_gaussians_p[px].gauss_p==0) continue; //pixel without Gaussians
+    
+    if(m_gaussians_p[px].size>33) //if long spectra
+    {
+      iLow =tools.nearestIndexGaussians(massRange.low,  m_gaussians_p[px].gauss_p, m_gaussians_p[px].size, +1); //ajuste a masa superior   
+      iHigh=tools.nearestIndexGaussians(massRange.high, m_gaussians_p[px].gauss_p, m_gaussians_p[px].size, -1); //ajuste a masa inferior
+      if(iLow==-1 || iHigh==-1 || iLow>iHigh) continue;
+
+      for(int i=iLow; i<=iHigh; i++)
+      {
+        if(count>=size) //limits control
+          {
+          hit=true;
+          break;
+          }
+        //copia
+        gaussians_p[count][0]=m_gaussians_p[px].gauss_p[i].mean;
+        gaussians_p[count][1]=fabs(m_gaussians_p[px].gauss_p[i].sigma);
+        gaussians_p[count][2]=m_gaussians_p[px].gauss_p[i].weight;
+        gaussians_p[count][3]=(float)px;
+        count++;
+      }
+    if(hit) break;
+    }
+  else //short spectra
+  {
+    for(int i=0 ; i<m_gaussians_p[px].size; i++) 
+      {
+      
       if(m_gaussians_p[px].gauss_p[i].mean>= massRange.low && 
          m_gaussians_p[px].gauss_p[i].mean<= massRange.high)
-      {
+        {
+        if(count>=size) //limits control 
+          {
+          hit=true;
+          break;
+          }
         gaussians_p[count][0]=m_gaussians_p[px].gauss_p[i].mean;
         gaussians_p[count][1]=fabs(m_gaussians_p[px].gauss_p[i].sigma);
         gaussians_p[count][2]=m_gaussians_p[px].gauss_p[i].weight;
@@ -730,6 +766,7 @@ int PeakMatrix::getCentroidsIntoRange(MASS_RANGE massRange, float **gaussians_p)
         count++;
       }
     }
+  }  
   }
   return count;
 }
@@ -849,8 +886,8 @@ int PeakMatrix::setGaussiansIntoSegments(MASS_RANGE massRange)
       {
         if(m_gaussians_p[px].gauss_p[g].mean>=massLow && m_gaussians_p[px].gauss_p[g].mean<=massHigh)
           nGaussians++;
-        if(nGaussians>maxGaussians) maxGaussians=nGaussians;
       }
+      if(nGaussians>maxGaussians) maxGaussians=nGaussians;
     }
     m_massRange_p[mr].nGaussians=nGaussians; 
   }
@@ -892,12 +929,10 @@ for(int i=iLow; i<=iHigh; i++)
   double massRes=m_massRange_p[iLow].low/m_massResolution;//minimum resolution for the thread
   int maxClustersThr=ceil(maxRange/massRes); //maximum clusters
 
-  bool *seg_p=0;
   int *tmpIndex_p=0, *sortedIndex_p=0;;
   float *prob_p=0, *mass_p=0;
   double *tmpMass_p=0;
   
-  seg_p=new bool[maxClustersThr];
   tmpMass_p=new double[maxClustersThr];
   tmpIndex_p=new int[maxClustersThr];
   prob_p=new float[maxClustersThr];
@@ -905,7 +940,9 @@ for(int i=iLow; i<=iHigh; i++)
   sortedIndex_p=new int [maxClustersThr];
   
   //maximum Gaussians in the given mass range.
-  int maxGNumber=setGaussiansIntoSegments(m_massSegment.massRange_p[thrIndex]);
+  int maxGNumber, maxGNumber2;
+  maxGNumber=setGaussiansIntoSegments(m_massSegment.massRange_p[thrIndex]);
+//  maxGNumber+=100;
   gaussians_p=new float*[maxGNumber];
   for(int i=0; i<maxGNumber; i++)
   {
@@ -931,7 +968,7 @@ for(int i=iLow; i<=iHigh; i++)
     
     int rangeNCenters;
     //Capture of the centroids in the range of masses to be considered.
-    rangeNCenters=getCentroidsIntoRange(massRange2, gaussians_p);
+    rangeNCenters=getCentroidsIntoRange(massRange2, gaussians_p, maxGNumber);
     if(rangeNCenters<=m_pxSupport) continue; //minimum size control.
 
     //mass vector for the current range.
@@ -946,7 +983,6 @@ for(int i=iLow; i<=iHigh; i++)
     newMassRes=massRes;
     double massResSqr=massRes*massRes; //Da*Da
     int nClusters, iter=0;
-    bool R, S;
     hit=true;
     int maxMasterIter=10; //maximum coarse iterations.
     
@@ -993,14 +1029,11 @@ for(int i=iLow; i<=iHigh; i++)
           int cPixels=kmeans.m_kStruct.clusters_p[c].data.size; //px that support
           //dispersion measure.
           double res=kmeans.m_kStruct.clusters_p[c].withinss/cPixels; //mean square distance.
-          R=res<massResSqr;               //'1' if the group dispersion is low.
-          if(R) {seg_p[c]=true;}     //suitable group.
-          else {
-            seg_p[c]=false;         //deficient group, by default.
-            hit=false; break;}      //requires iteration to improve.
+          if(res>massResSqr)
+            {hit=false; break;}         //requires iteration to improve.
           }
-        if(hit) {break;} //all groups of size>minimum have low dispersion.
-      }//end for() for nClusters
+        if(hit) {break;}                //all groups of size>minimum have low dispersion.
+      } //end for() for nClusters
       
     //If the desired conditions are not met, the constraints are relaxed and iterates completely.
     if(!hit) 
@@ -1026,11 +1059,6 @@ for(int i=iLow; i<=iHigh; i++)
     
     if(iter>=maxMasterIter) {kmeans.freeClusters();continue;}//voided segment.
     
-    //Here, two cases can occur:
-    //1) all groups have low dispersion and are of good size (optimal).
-    //2) there are groups with high dispersion and they are small (they are discarded),
-    // the rest have low dispersion and are large  
-    
     //increasing mass ordering
     for(int c=0; c<kmeans.m_kStruct.nClusters; c++)
     {
@@ -1039,50 +1067,6 @@ for(int i=iLow; i<=iHigh; i++)
 
     common.sortUp(tmpMass_p, tmpIndex_p, kmeans.m_kStruct.nClusters);
 
-/*
-    //filter 1: discard poorly supported clusters -> "minPixelsSupport" parameter
-    //goodIndex maintains indexes to 'good' clusters
-    int goodIndex[kmeans.m_kStruct.nClusters];
-    int goodIndexSize=0;
-    for(int c=0; c<kmeans.m_kStruct.nClusters; c++)
-    {
-      int sortIndex=tmpIndex_p[c];
-      if(!seg_p[sortIndex]) 
-        {continue;} //the poorly supported group is excluded.
-      goodIndex[goodIndexSize++]=sortIndex;
-     }
-    
-    //filter 2: clusters too close -> "maxMassResolution" parameter.
-    //The proximity of the masses is analyzed. If they are too close,
-    //the smallest cluster is discarded.
-    int goodIndexEnd[goodIndexSize];
-    double centerA, centerB;
-    int indexA=goodIndex[0], indexB, goodIndexEndSize=0;
-    
-    if(goodIndexSize==1)//if only one cluster exists.
-      goodIndexEnd[goodIndexEndSize++]=goodIndex[0]; 
-    
-    //For all clusters, they are analyzed in sequence, since they are ordered.
-    for(int c=1; c<goodIndexSize; c++)
-    {
-      indexB=goodIndex[c];//next cluster
-      centerA=kmeans.m_kStruct.clusters_p[indexA].center;//previous mass.
-      centerB=kmeans.m_kStruct.clusters_p[indexB].center;//next mass
-      if(fabs(centerB-centerA) < minDistance) //very close centers: the small one is ruled out.
-      {
-        int sizeA=kmeans.m_kStruct.clusters_p[indexA].data.size;
-        int sizeB=kmeans.m_kStruct.clusters_p[indexB].data.size;
-        if(sizeB>sizeA)indexA=indexB; //the index points to the largest and iterates.
-        if(c+1==goodIndexSize) goodIndexEnd[goodIndexEndSize++]=indexA; //last
-      }
-      else //distant centers.
-      {
-        goodIndexEnd[goodIndexEndSize++]=indexA; 
-        if(c+1==goodIndexSize) goodIndexEnd[goodIndexEndSize++]=indexB; //last
-        indexA=indexB; //to iterate
-      }
-    }
-*/
     //The results are saved.
     //Memory is created to store the cluster information about the peak array.
     //These are structures linked by pointers so they can grow.
@@ -1122,7 +1106,6 @@ for(int i=iLow; i<=iHigh; i++)
   m_totalIons[thrIndex]=totalIons;
   
   //reserved memory is freed.
-  if(seg_p) delete [] seg_p;
   if(tmpMass_p) delete [] tmpMass_p;
   if(tmpIndex_p) delete [] tmpIndex_p;
   if(prob_p) delete [] prob_p;
