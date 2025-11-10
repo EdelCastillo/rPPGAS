@@ -88,7 +88,6 @@ List peakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float
   return ret;
 }
 
-
 //Constructor
 //captures input information, allocates memory and initializes.
 ////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +101,7 @@ PeakMatrix::PeakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params
   df=imzML["run"];
   m_continuous=imzML["continuous_mode"];
   m_NPixels=df.nrows();
-
+//  m_NPixels=70;
   printf("...#px=%d mzLow:%f mzHigh:%f\n",m_NPixels, m_mzLow, m_mzHigh);
   
   NumericVector nv;
@@ -286,6 +285,9 @@ void PeakMatrix::freeMemoryPeak()
   
 }
 
+GAUSS_SP *PeakMatrix::getGaussiansPointer() {return m_gaussians_p;}
+int PeakMatrix::getPixelsNumber() {return m_NPixels;}
+
 //rawToGaussians
 //gets the intensity peak and converts them into Gaussians.
 //The intensity and mass data adjusted to the range of interest are loaded from the imzML file.
@@ -377,7 +379,6 @@ int PeakMatrix::getRawInfo(int px, int spIndex)
   int intSize=m_getImzMLData_p->getPixelIntensityF(px, m_spectro[spIndex].tmpInt_p);
 
   m_spectro[spIndex].pixel=px;
-
   return massSize;
 } 
 
@@ -445,6 +446,8 @@ int PeakMatrix::mtGetGaussians(int spIndex)
     
     //the peak are extracted from the spectrum (they are delimited by their indices).
     nPeak=intPeak.getPeakList(&m_spectro[spIndex]);
+    //printf("nPeaks:%d\n", nPeak);
+    
     globalPeak+=nPeak; //peak accumulation
     globalCount++;       //processed spectra
     
@@ -519,6 +522,7 @@ int PeakMatrix::mtGetGaussians(int spIndex)
 
   return 0;
 }
+
 
 //getGaussians()
 //Called from a thread.
@@ -893,6 +897,7 @@ int PeakMatrix::setGaussiansIntoSegments(MASS_RANGE massRange)
   }
   return maxGaussians;
 }
+
 
 //mtSegmentation()
 //Kmeans segmentation in parallel processing.

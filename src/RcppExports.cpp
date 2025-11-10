@@ -200,6 +200,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rGetPixelGaussians
+List rGetPixelGaussians(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow, float mzHigh, int pixel);
+RcppExport SEXP _rPPGAS_rGetPixelGaussians(SEXP ibdFnameSEXP, SEXP imzMLSEXP, SEXP paramsSEXP, SEXP mzLowSEXP, SEXP mzHighSEXP, SEXP pixelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const char* >::type ibdFname(ibdFnameSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type imzML(imzMLSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< float >::type mzLow(mzLowSEXP);
+    Rcpp::traits::input_parameter< float >::type mzHigh(mzHighSEXP);
+    Rcpp::traits::input_parameter< int >::type pixel(pixelSEXP);
+    rcpp_result_gen = Rcpp::wrap(rGetPixelGaussians(ibdFname, imzML, params, mzLow, mzHigh, pixel));
+    return rcpp_result_gen;
+END_RCPP
+}
 // peakMatrix
 List peakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow, float mzHigh, int nThreads);
 RcppExport SEXP _rPPGAS_peakMatrix(SEXP ibdFnameSEXP, SEXP imzMLSEXP, SEXP paramsSEXP, SEXP mzLowSEXP, SEXP mzHighSEXP, SEXP nThreadsSEXP) {
@@ -232,6 +248,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rPPGAS_Cload_imzMLImages", (DL_FUNC) &_rPPGAS_Cload_imzMLImages, 5},
     {"_rPPGAS_CimzMLParse", (DL_FUNC) &_rPPGAS_CimzMLParse, 1},
     {"_rPPGAS_CimzMLStore", (DL_FUNC) &_rPPGAS_CimzMLStore, 3},
+    {"_rPPGAS_rGetPixelGaussians", (DL_FUNC) &_rPPGAS_rGetPixelGaussians, 6},
     {"_rPPGAS_peakMatrix", (DL_FUNC) &_rPPGAS_peakMatrix, 6},
     {NULL, NULL, 0}
 };

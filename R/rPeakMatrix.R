@@ -123,6 +123,111 @@ getPeakMatrix<-function(data_file,
 }
 
 
+#' @name getPxGaussians
+#' @title It retrieves information from a single pixel.
+#' @param data_file: absolute reference to the file with the imzML extension.
+#' @param params  
+#'      "massResolution": mass resolution with which the spectra were acquired (mz/deltaMz).
+#'                 "SNR": signal-to-noise ratio
+#'         "noiseMethod": method for estimating noise.
+#' @param lowMass:  lower mass to consider
+#' @param highMass: higher mass to consider
+#' @param imzMLChecksum: if the binary file checksum must be verified, it can be disabled for convenice with really big files.
+#' @param imzMLSubCoords: a Complex vector with the motors coordinates to be included in the ramdisk, if NULL all positions will be used.
+#' @param fixBrokenUUID: set to FALSE by default to automatically fix an uuid mismatch between the ibd and the imzML files (a warning message will be raised).
+#'
+#' @return a list: 
+#'    gaussians: parameters of each Gaussian.
+#'         mass: Vector with raw masses.
+#'    intensity: vector with raw intensities;
+#'          SNR: signal-to-noise ratio for each point of mass.
+#'
+#' @export
+getPxGaussians<-function(data_file,
+                        params,
+                        lowMass=0,
+                        highMass=0,
+                        pixel=1,
+                        imzMLChecksum = F, 
+                        imzMLSubCoords = NULL,
+                        fixBrokenUUID = F)
+{
+  if(!file.exists(data_file))
+  {
+    stop("File not found\n")
+  }
+  
+  #control de parámetros
+  if(!(exists("SNR", where=params)))
+  {
+    print("warning: by default, SNR parameter will be 1.")
+    params=c(params, "SNR"=1)
+  }
+  if(!(exists("minPixelsSupport", where=params)))
+  {
+    print("warning: by default, minPixelsSupport parameter will be 1%.")
+    params=c(params, "minPixelsSupport"=1)
+  }
+  if(!(exists("noiseMethod", where=params)))
+  {
+    print("warning: by default, noiseMethod will be MAD type.")
+    params=c(params, "noiseMethod"="estnoise_mad")
+  }
+  if(!(exists("massResolution", where=params)))
+  {
+    print("ERROR: massResolution parameter is required.") 
+    return (0)
+  }
+  if(params$massResolution<=0)
+  {
+    print("ERROR: massResolution must be greater than zero.") 
+    return (0)
+  }
+  
+  imgData <- NULL
+  
+  #Default  fun_label()
+  #fun_label This is a callback function to update the progress bar dialog text.
+  fun_label <- function(text)
+  {
+    cat(text)
+    cat("\n")
+  }
+  #fun_progress This is a callback function to update the progress of loading data. See details for more information.
+  fun_progress = NULL; 
+  #close_signal function to be called if the loading process is aborted.
+  close_signal = NULL;
+  #imzMLRename the image name, if NULL a default name based on the file name will be used.
+  imzMLRename  = NULL;
+  
+  pt<-proc.time()
+  
+  fileExtension <- unlist(strsplit(basename(data_file), split = "\\."))
+  fileExtension <- as.character(fileExtension[length(fileExtension)])
+  if( fileExtension == "imzML")
+  {
+    #captura de info desde fichero imzML
+    in_img <- import_imzML(path.expand(data_file),  fun_progress = fun_progress, fun_text = fun_label, 
+                           close_signal = close_signal, verifyChecksum = imzMLChecksum, subImg_rename = imzMLRename, 
+                           subImg_Coords = imzMLSubCoords, fixBrokenUUID = fixBrokenUUID)
+    
+    #nombre del fichero de datos binarios
+    file=path.expand(file.path(in_img$data$path, paste0(in_img$data$imzML$file, ".ibd")));
+    if(lowMass>highMass)
+    {
+      print("warning: the lower mass exceeds the upper mass")
+      lowMass=highMass
+    }
+    #generación de la matrix de picos
+    pxGauss<-rGetPixelGaussians(file, in_img$data$imzML, params, lowMass, highMass, pixel);
+    
+    pt<-proc.time() - pt
+    display_processing_time(pt, "Data processing time")
+    return(pxGauss)
+  }
+  print("warning: imzML file type is required." )
+}
+
 
 #//////////////////////////////////////////////////////////////
 #' uuid.

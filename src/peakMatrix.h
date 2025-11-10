@@ -101,7 +101,11 @@ public:
   //massVector: The mz associated with each column of the peakMatrix.
   //pixelsSupport: Number of pixels with intensity > 0.
   List massRangeToCentroids(MASS_RANGE massRange);
-
+  
+  GAUSS_SP *getGaussiansPointer();
+  int getPixelsNumber();
+  NumericMatrix getPixelGaussians(int px, float mzLow, float mzHigh);
+    
 private:  
   //getGaussians()
   //Called from a thread.
@@ -174,7 +178,7 @@ private:
   int     
                 m_totalIons[MAX_THREADS],
                 m_SNRmethod;
-  NoiseEstimation *m_noiseEst_p;  
+  NoiseEstimation *m_noiseEst_p; 
 }; 
 
 #endif

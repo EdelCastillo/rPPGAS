@@ -162,6 +162,10 @@ CimzMLStore <- function(fname, imgInfo, mass_spectrometer_file_format = "rMSI ex
     .Call('_rPPGAS_CimzMLStore', PACKAGE = 'rPPGAS', fname, imgInfo, mass_spectrometer_file_format)
 }
 
+rGetPixelGaussians <- function(ibdFname, imzML, params, mzLow, mzHigh, pixel) {
+    .Call('_rPPGAS_rGetPixelGaussians', PACKAGE = 'rPPGAS', ibdFname, imzML, params, mzLow, mzHigh, pixel)
+}
+
 #'
 #'  @name peakMatrix
 #'  @title converts the info in the imzML file into a peak matrix.
