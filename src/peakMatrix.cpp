@@ -29,10 +29,11 @@ int  globalPeak=0, globalCount=0; //contadores de picos
 //'  @param ibdFname  absolute reference to the file with the ibd extension.
 //'  @param imzML  list with information extracted from the imzML file with import_imzML()
 //'  @param params specific parameters
-//'   "SNR": signal-to-noise ratio
+//'              "SNR": signal-to-noise ratio
 //'   "massResolution": mass resolution with which the spectra were acquired.
-//'   "noiseMethod": method for estimating noise.
-//'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+//'      "noiseMethod": method for estimating noise.
+//' "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+//'      "linkedPeaks": two peaks are considered linked if they are closer than the given standard deviation (by defect=3).   
 //'  @param mzLow  lower mass to consider
 //'  @param mzHigh higher mass to consider
 //'  @param nThreads number of threads suggested for parallel processing.
@@ -47,11 +48,15 @@ List peakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float
 {
   globalPeak=0, globalCount=0;
   PeakMatrix pMatrix(ibdFname, imzML, params, mzLow, mzHigh, nThreads);  
-  
+//return 0;  
   //loads data from a file and converts its peak into Gaussians.
   pMatrix.rawToGaussians(); //parallel processing
+  if(globalPeak==0) return 0;
 
   pMatrix.m_massRangeSize=pMatrix.getMassRanges();
+  if(pMatrix.m_massRangeSize<=0) 
+    {printf("There are no valid mass segments.\n"); return 0;}
+  
   printf("\t\ttotal segments=%d max Gaussians in a spectra=%d\n", 
          pMatrix.m_massRangeSize, pMatrix.m_maxPxGaussians);
 
@@ -95,13 +100,14 @@ PeakMatrix::PeakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params
 {
   m_mzLow=mzLow;
   m_mzHigh=mzHigh;
-
+  
   //information capture
   Rcpp::DataFrame df;
   df=imzML["run"];
   m_continuous=imzML["continuous_mode"];
   m_NPixels=df.nrows();
-//  m_NPixels=70;
+  
+//  m_NPixels=20;
   printf("...#px=%d mzLow:%f mzHigh:%f\n",m_NPixels, m_mzLow, m_mzHigh);
   
   NumericVector nv;
@@ -120,6 +126,10 @@ PeakMatrix::PeakMatrix(const char* ibdFname, Rcpp::List imzML, Rcpp::List params
   cv=params["noiseMethod"];
   String tmpStr=cv[0];
   const char* SNRmethod=tmpStr.get_cstring(); //conversion C
+  
+  //Two peaks are considered linked if they are closer than the given standard deviation.
+  nv=params["linkedPeaks"]; 
+  m_linkedPeaks=nv[0];
   
   if     (strcmp(SNRmethod, "estnoise_diff")==0) {m_SNRmethod=1; }
   else if(strcmp(SNRmethod, "estnoise_sd")  ==0) {m_SNRmethod=2; }
@@ -325,7 +335,7 @@ int PeakMatrix::rawToGaussians()
         //If the spectrum size <=2 its peak are not processed.
         if(spSize>2) break;//spectrum for analysis. There is no information of interest in the pixel spectrum <=3 peak.
         }
-      if(spSize>2 && pixel<m_NPixels) 
+      if(spSize>2 && pixel<=m_NPixels) 
         {
         nThr++;
         {m_spectro[thr].mutexIn_p->unlock();} //This thread is allowed to run.
@@ -396,7 +406,7 @@ int PeakMatrix::mtGetGaussians(int spIndex)
   GAUSS_PARAMS *gaussians_p=0;
   double *centroids_p=0;
   int *centroidsIndex_p=0;
-  
+
   //while execution is enabled.
   while(m_enable)
   {
@@ -410,7 +420,7 @@ int PeakMatrix::mtGetGaussians(int spIndex)
 
     int spSize=m_spectro[spIndex].size; //spectrum size
     //SNR
-    m_noiseEst_p->getSNR(m_spectro[spIndex].tmpInt_p, m_spectro[spIndex].size,  m_spectro[spIndex].tmpSNR_p);
+    m_spectro[spIndex].noise=m_noiseEst_p->getSNR(m_spectro[spIndex].tmpInt_p, m_spectro[spIndex].size,  m_spectro[spIndex].tmpSNR_p);
 
     //the spectrum is limited to the range of interest.
     iMzLow =common.nearestIndex(m_mzLow,  m_spectro[spIndex].tmpMass_p, spSize); //low index
@@ -446,15 +456,16 @@ int PeakMatrix::mtGetGaussians(int spIndex)
     
     //the peak are extracted from the spectrum (they are delimited by their indices).
     nPeak=intPeak.getPeakList(&m_spectro[spIndex]);
-    //printf("nPeaks:%d\n", nPeak);
-    
+
+  if(nPeak>0)
+  {
     globalPeak+=nPeak; //peak accumulation
     globalCount++;       //processed spectra
+  }
     
     if(nPeak>0) //if there are peak to treat
       {
       int px=m_spectro[spIndex].pixel; //pixel
-      
       //single peak info is saved.
       m_peakFG_p[px].peakF_p=new ION_INDEX[nPeak];
       for(int i=0; i<nPeak; i++) //copy peak
@@ -463,8 +474,8 @@ int PeakMatrix::mtGetGaussians(int spIndex)
         m_peakFG_p[px].peakF_p[i].max =intPeak.getSinglePeak(i).max;
         m_peakFG_p[px].peakF_p[i].high=intPeak.getSinglePeak(i).high;
       }
+
       m_peakFG_p[px].peakFsize=nPeak;//number of simple peak
-      
       //the information of compound peak (simple joined-overlapping peak) is obtained.
       int nUPeak=intPeak.getCompoundPeakNumber(); 
 
@@ -537,7 +548,7 @@ int PeakMatrix::getGaussians(int px, SPECTRO *spectro_p, GAUSS_PARAMS *gaussians
   float *intSpectrum_p=spectro_p->int_p, *massSpectrum_p=spectro_p->mass_p;
   int intSize=spectro_p->size;
   
-  int minMeanPxMag=1;
+  float minMeanPxMag=spectro_p->noise*m_SNR; //minimum value to consider a peak as valid.
   //class for conversion to Gaussians.
   GmmPeak gmmPeak(minMeanPxMag);
   
@@ -567,10 +578,10 @@ int PeakMatrix::getGaussians(int px, SPECTRO *spectro_p, GAUSS_PARAMS *gaussians
     pxMag.size=mzSize;
     gmmPeak.setMagnitudes(&pxMag); //magnitude peak.
     
-    //The simple Gaussians are formed whose sum reproduces the magnitude peak.
+  //The simple Gaussians are formed whose sum reproduces the magnitude peak.
     if(gmmPeak.gmmDeconvolution()<0) //deconvolution
     {
-      printf("ERROR: limits exceeded. The aim is to deconvolve a peak composed of more than %d Gaussians.\n", DECONV_MAX_GAUSSIAN);
+      printf("Warning: limits exceeded in pixel%d. The aim is to deconvolve a peak composed of more than %d Gaussians.\n", spectro_p->pixel, DECONV_MAX_GAUSSIAN);
       return -4;
     }
     if(intSize<mzSize) //if the dimensions are not correct.
@@ -627,6 +638,8 @@ List PeakMatrix::massRangeToCentroids(MASS_RANGE massRangeIn)
   int indexHigh=common.nearestIndexMassRangeHigh(massRangeIn.high, m_massRange_p, m_massRangeSize);
   int deltaSegment=(indexHigh-indexLow+1)/m_nThreads; //partes iguales para cada thread
 
+  if(indexLow==-1 || indexHigh==-1) return 0;
+  
   //Memory for necessary structures.
   //Holds mass range information.
   m_massSegment.massRange_p=  new MASS_RANGE[m_nThreads];
@@ -798,7 +811,7 @@ int PeakMatrix::getCentroidsNumberIntoRange(MASS_RANGE massRange)
 //getMassRanges()
 //establishes the mass segments where overlapping Gaussians exist.
 //generates a Boolean mass axis with a resolution of 1/4 of the spectrometer's mass resolution.
-//if any Gaussian invades its space, sets the corresponding +/-3*sigma checkboxes to true.
+//if any Gaussian invades its space, sets the corresponding +/-m_linkedPeaks*sigma checkboxes to true.
 //Very wide Gaussians (sigma > 5*deltaMass) are discarded.
 //the information is stored in the array pointed to by m_massRange_p.
 //returns the number of segments.
@@ -828,8 +841,8 @@ int PeakMatrix::getMassRanges()
         continue;
       }
     //masses occupied by the Gaussian.
-    highMass=m_gaussians_p[px].gauss_p[i].mean+3*m_gaussians_p[px].gauss_p[i].sigma;
-    lowMass =m_gaussians_p[px].gauss_p[i].mean-3*m_gaussians_p[px].gauss_p[i].sigma;
+    highMass=m_gaussians_p[px].gauss_p[i].mean+m_linkedPeaks*m_gaussians_p[px].gauss_p[i].sigma;
+    lowMass =m_gaussians_p[px].gauss_p[i].mean-m_linkedPeaks*m_gaussians_p[px].gauss_p[i].sigma;
     if(lowMass<m_mzLow) lowMass =m_mzLow;
     if(highMass>m_mzHigh) highMass=m_mzHigh;
 
@@ -970,7 +983,7 @@ for(int i=iLow; i<=iHigh; i++)
     massRange2.low =m_massRange_p[mrIndex].low; //mass segment to be evaluated
     massRange2.high=m_massRange_p[mrIndex].high;
     m_massRange_p[mrIndex].resolution=0;
-    
+      
     int rangeNCenters;
     //Capture of the centroids in the range of masses to be considered.
     rangeNCenters=getCentroidsIntoRange(massRange2, gaussians_p, maxGNumber);

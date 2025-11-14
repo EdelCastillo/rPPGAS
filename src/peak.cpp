@@ -32,17 +32,8 @@ Peak::Peak(SPECTRO *spectro_p, float SNR)
     m_magnitudeSize=spectro_p->size;
     m_mzIndex_p=0;
     m_mzIndex_p=new ION_INDEX[m_magnitudeSize];
+    m_noiseLevel=spectro_p->noise*SNR;
     m_SNR=SNR;
-    m_SNR_p=spectro_p->SNR_p;
-    m_noise_p=0;
-    m_noise_p=new float[spectro_p->size+1];
-    for(int i=0; i<spectro_p->size; i++)
-    {
-      if(m_SNR_p[i]>0)
-      {m_noise_p[i]=m_magnitude_p[i]/m_SNR_p[i];}
-      else {m_noise_p[i]=1e30;}
-    }
-    m_noise_p[spectro_p->size]=m_noise_p[spectro_p->size-1];
     }
 
 //destructor
@@ -50,8 +41,6 @@ Peak::Peak(SPECTRO *spectro_p, float SNR)
 Peak::~Peak()
     {
     if(m_mzIndex_p) delete [] m_mzIndex_p;
-    //if(m_SNR_p)     delete [] m_SNR_p;
-    if(m_noise_p)   delete [] m_noise_p; 
     }
 
 //update the list of magnitudes
@@ -62,16 +51,7 @@ void Peak::setMagnitude(SPECTRO *spectro)
 {
     m_magnitude_p=spectro->int_p;
     m_magnitudeSize=spectro->size;
-    m_SNR_p=spectro->SNR_p;
-    if(m_noise_p) {delete []m_noise_p; m_noise_p=0;}
-    m_noise_p=new float[spectro->size+1];
-    for(int i=0; i<spectro->size; i++)
-    {
-      if(m_SNR_p[i]>0)
-        {m_noise_p[i]=m_magnitude_p[i]/m_SNR_p[i];}
-      else {m_noise_p[i]=1e30;}
-    }
-    m_noise_p[spectro->size]=m_noise_p[spectro->size-1];
+    m_noiseLevel=spectro->noise*m_SNR;
     
 }
 
@@ -115,15 +95,14 @@ int Peak::get(int mzIndexIni, int mzIndexEnd)
     bool hitCresta=false, hitValle=false;
     State state;
     int ionCresta=0, ionValle=0, ionIndex=0, TmaxIon=0, TminIon=0;
-    float TiniVal=0, TmaxVal=0, TminVal=0, A, B, N1, N2, resolution;
+    float TiniVal=0, TmaxVal=0, TminVal=0, A, B, resolution;
 
     float delta;
     int indexIni=0;
 //    Common tools;
 
     if(mzSize==1){  //case there is only one value.
-            if(m_SNR_p[ionIndex]<m_SNR) return 0; //no peak detected.
-            //if(m_magnitude_p[0]<m_noise) return 0; //no peak detected.
+            if(m_magnitude_p[ionIndex]<m_noiseLevel) return 0; //no peak detected.
             m_mzIndex_p[ionIndex].low= mzIndexIni;
             m_mzIndex_p[ionIndex].high=mzIndexIni;
             m_mzIndex_p[ionIndex].max=mzIndexIni;
@@ -136,15 +115,13 @@ int Peak::get(int mzIndexIni, int mzIndexEnd)
         for(indexIni=0; indexIni<=mzIndexEnd; indexIni++)
             {
             A=m_magnitude_p[indexIni]; //noise is considered by canceling the lower values.
-            if(m_SNR_p[indexIni]<m_SNR) {A=0.0; N1=0;}
-            else {N1=m_noise_p[indexIni];}
-            
+            if(A<m_noiseLevel) A=0.0;
+
             B=m_magnitude_p[indexIni+1];
-            if(m_SNR_p[indexIni+1]<m_SNR) {B=0.0; N2=0;}
-            else {N2=m_noise_p[indexIni+1];}
+            if(B<m_noiseLevel) B=0.0;
 
             if(A==0 && B==0) {continue;}
-            resolution=N1>N2?N2:N1;  //lower noise
+            resolution=m_noiseLevel;  //lower noise
             //initial state for FSM.
             delta=B-A;
             if(delta>resolution)  {state=UP;   break;}
@@ -158,15 +135,13 @@ int Peak::get(int mzIndexIni, int mzIndexEnd)
             {
             ionOK=false;
           A=m_magnitude_p[mzIndex]; //noise is considered by canceling the lower values.
-          if(m_SNR_p[mzIndex]<m_SNR) {A=0.0; N1=0;}
-          else {N1=m_noise_p[mzIndex];}
-          
+          if(A<m_noiseLevel) A=0.0;
+
           B=m_magnitude_p[mzIndex+1];
-          if(m_SNR_p[mzIndex+1]<m_SNR) {B=0.0; N2=0;}
-          else {N2=m_noise_p[mzIndex+1];}
-          
+          if(B<m_noiseLevel) B=0.0;
+
           if(A==0 && B==0) {continue;}
-          resolution=N1>N2?N2:N1;  //lower noise
+          resolution=m_noiseLevel;  //lower noise
           //initial state for FSM.
           delta=B-A;
             if(state==UP)
@@ -250,10 +225,8 @@ int Peak::get(int mzIndexIni, int mzIndexEnd)
         int max=m_mzIndex_p[i].max;
         for(int j=m_mzIndex_p[i].low; j<m_mzIndex_p[i].high; j++) //for the values within the ion.
             {
-            //if(j<max && m_magnitude_p[j]<=m_noise) A=j; //before the maximum.
-            if(j<max && m_SNR_p[j]<=m_SNR) A=j; //before the maximum.
-            //else if(j>max && m_magnitude_p[j]<=m_noise) {B=j; break;}  //after the maximum.
-            else if(j>max && m_SNR_p[j]<=m_SNR) {B=j; break;}  //after the maximum.
+            if(j<max && m_magnitude_p[j]<=m_noiseLevel) A=j; //before the maximum.
+            else if(j>max && m_magnitude_p[j]<=m_noiseLevel) {B=j; break;}  //after the maximum.
             }
         if(A!=-1) m_mzIndex_p[i].low=A; //adjustment.
         if(B!=-1) m_mzIndex_p[i].high=B;
@@ -272,10 +245,7 @@ int Peak::get(int mzIndexIni, int mzIndexEnd)
             if(m_magnitude_p[j]>maxValue) {maxValue=m_magnitude_p[j]; maxIndex=j;}
             if(m_magnitude_p[j]<minValue) {minValue=m_magnitude_p[j]; minIndex=j;}
             }
-        N1=m_noise_p[maxIndex];
-        N2=m_noise_p[minIndex];
-
-        resolution=N1>N2?N2:N1;  //lower noise
+        resolution=m_noiseLevel;  //lower noise
         if(maxValue-minValue>resolution)
                 m_mzIndex_p[i].confidence=true;
         }

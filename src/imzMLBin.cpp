@@ -404,7 +404,7 @@ void ImzMLBinRead::readUUID(char* uuid)
 
 void ImzMLBinRead::readMzData(std::streampos offset, unsigned int N, double* ptr )
 {
-  if(get_continuous())
+  if(0)//if(get_continuous())
   {
     if( N  != get_mzLength(0))
     {

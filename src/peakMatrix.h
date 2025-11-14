@@ -160,7 +160,8 @@ private:
   float     
     m_mzLow,
     m_mzHigh,
-    m_SNR;
+    m_SNR,
+    m_linkedPeaks; //Two peaks are considered linked if they are closer than the given standard deviation.
   double     
     m_massResolution,
     m_maxMassResolution;  

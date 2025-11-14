@@ -97,9 +97,8 @@ public:
     double rangeConversion(double value, double x1, double x2, double y1, double y2);
 
     float   *m_magnitude_p, //array of input values to extract peak.
-            *m_noise_p,        //minimum value so that the value of magnitude_p[] can be considered.
-            *m_SNR_p;
-    float    m_SNR;
+            m_noiseLevel,        //minimum value so that the value of magnitude_p[] can be considered.
+            m_SNR;
     int     m_magnitudeSize;//size of the array of input values.
     ION_INDEX *m_mzIndex_p; //ION_INDEX structure array where the peak remain.
     float   m_minGap,       //minimum increment of magnitude between scans. Lower values are rejected (min sensitivity)

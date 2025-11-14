@@ -173,10 +173,11 @@ rGetPixelGaussians <- function(ibdFname, imzML, params, mzLow, mzHigh, pixel) {
 #'  @param ibdFname  absolute reference to the file with the ibd extension.
 #'  @param imzML  list with information extracted from the imzML file with import_imzML()
 #'  @param params specific parameters
-#'   "SNR": signal-to-noise ratio
+#'              "SNR": signal-to-noise ratio
 #'   "massResolution": mass resolution with which the spectra were acquired.
-#'   "noiseMethod": method for estimating noise.
-#'   "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+#'      "noiseMethod": method for estimating noise.
+#' "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+#'      "linkedPeaks": two peaks are considered linked if they are closer than the given standard deviation (by defect=3).   
 #'  @param mzLow  lower mass to consider
 #'  @param mzHigh higher mass to consider
 #'  @param nThreads number of threads suggested for parallel processing.

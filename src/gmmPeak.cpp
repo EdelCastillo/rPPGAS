@@ -181,6 +181,7 @@ int GmmPeak::iniGMM()
         m_etpHits=1;
         nGauss++;
         m_nDeconv++;
+        if(nGauss>=DECONV_MAX_GAUSSIAN) return-2;
         }
     m_sGmm.maxIter=nGauss*40; //maximum iterations for adjustment in GMM
     return nGauss; //number of Gaussians that will make up the peak magnitude

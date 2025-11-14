@@ -91,7 +91,7 @@ float NoiseEstimation::getNoise(float *spectro_p, int size)
 //size: Size of the data array.
 //Sets the result to the SNR_p pointer.
 //Returns 0
-int NoiseEstimation::getSNR(float *spectro_p, int size, float *SNR_p)
+float NoiseEstimation::getSNR(float *spectro_p, int size, float *SNR_p)
 {
   float estNoise;
   
@@ -107,7 +107,7 @@ int NoiseEstimation::getSNR(float *spectro_p, int size, float *SNR_p)
   {
     for(int i=0; i<size; i++) SNR_p[i]=spectro_p[i]/estNoise;
   }
-  return 0;
+  return estNoise;
 }
 
 //getNoise_mad()

@@ -46,8 +46,8 @@ public:
   //spectro_p: Pointer to data.
   //size: Size of the data array.
   //Sets the result to the SNR_p pointer.
-  //Returns 0
-  int getSNR(float *spectro_p, int size, float *SNR_p);
+  //Returns the noise estimation
+  float getSNR(float *spectro_p, int size, float *SNR_p);
 
 private:  
   //getNoise_mad()

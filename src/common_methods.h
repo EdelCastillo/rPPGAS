@@ -41,15 +41,19 @@ public:
   bool TICnormalization(float *vect, int size);
   
   //ascending ordering of doubles values.
+  //If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
   int sortUp  (double *bufferIn, int *sort, int size);
   
   //descending ordering of doubles values.
+  //If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
   int sortDown(double *bufferIn, int *sort, int size);
   
   //ascending ordering of floats values.
+  //If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
   int sortUpF  (float *bufferIn, int *sort, int size);
   
   //descending ordering of floats values.
+  //If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
   int sortDownF(float* bufferIn, int *sort, int size);
   
   //returns the index to data closest to value.

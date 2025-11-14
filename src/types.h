@@ -117,7 +117,8 @@
             *SNR_p,         //signal-to-noise ratio array
             *tmpInt_p,      //array of temporal intensities
             *tmpMass_p,     //temporary mass array
-            *tmpSNR_p;      //temporal signal-to-noise ratio array
+            *tmpSNR_p,      //temporal signal-to-noise ratio array
+            noise;
           
       int   *sort_p,        //indexes to ordered information
             size,           //spectrum size

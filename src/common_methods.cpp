@@ -31,6 +31,28 @@ struct
 }
 cmp_Up;
 
+struct
+{
+  bool operator()(float a, float b) const { return a > b; }
+}
+cmp_DownF;
+struct
+{
+  bool operator()(float a, float b) const { return a < b; }
+}
+cmp_UpF;
+
+struct
+{
+  bool operator()(double a, double b) const { return a > b; }
+}
+cmp_DownD;
+struct
+{
+  bool operator()(double a, double b) const { return a < b; }
+}
+cmp_UpD;
+
 
 std::string parse_xml_uuid(std::string uuid)
 {
@@ -75,6 +97,7 @@ bool Common::TICnormalization(float *vect, int size)
 }
 
 //ascending ordering of doubles values.
+//If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
 int Common::sortUp(double *bufferIn, int *index, int size) 
 {
   if(index)
@@ -83,11 +106,12 @@ int Common::sortUp(double *bufferIn, int *index, int size)
     stable_sort(index, index+size, [&bufferIn](size_t i1, size_t i2) {return bufferIn[i1] < bufferIn[i2];});
   }
   else
-    stable_sort(bufferIn, bufferIn+size, cmp_Up /*[&bufferIn](size_t i1, size_t i2) {return bufferIn[i1] < bufferIn[i2];}*/);
+    stable_sort(bufferIn, bufferIn+size, cmp_UpD /*[&bufferIn](size_t i1, size_t i2) {return bufferIn[i1] < bufferIn[i2];}*/);
   return 0;
 }
 
 //descending ordering of doubles values.
+//If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
 int Common::sortDown(double *bufferIn, int *index, int size) 
 {
   if(index)
@@ -96,11 +120,12 @@ int Common::sortDown(double *bufferIn, int *index, int size)
     stable_sort(index, index+size, [&bufferIn](size_t i1, size_t i2) {return bufferIn[i1] > bufferIn[i2];});
   }
   else
-    stable_sort(bufferIn, bufferIn+size, cmp_Down);
+    stable_sort(bufferIn, bufferIn+size, cmp_DownD);
   return 0;
 }
 
 //ascending ordering of floats values.
+//If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
 int Common::sortUpF(float *bufferIn, int *index, int size) 
 {
   if(index)
@@ -108,12 +133,12 @@ int Common::sortUpF(float *bufferIn, int *index, int size)
     for(int i=0; i<size; i++) index[i]=i;
     stable_sort(index, index+size, [&bufferIn](size_t i1, size_t i2) {return bufferIn[i1] < bufferIn[i2];});
   }
-  else
-    stable_sort(bufferIn, bufferIn+size, cmp_Up /*[&bufferIn](size_t i1, size_t i2) {return ((float*)bufferIn)[i1] < ((float*)bufferIn)[i2];}*/);
+  else    stable_sort(bufferIn, bufferIn+size, cmp_UpF /*[&bufferIn](size_t i1, size_t i2) {return ((float*)bufferIn)[i1] < ((float*)bufferIn)[i2];}*/);
   return 0;
 }
 
 //descending ordering of floats values.
+//If index=null, the sorted information is returned in bufferIn; otherwise, bufferIn remains unchanged.
 int Common::sortDownF(float *bufferIn, int *index, int size) 
 {
   if(index)
@@ -122,7 +147,7 @@ int Common::sortDownF(float *bufferIn, int *index, int size)
     stable_sort(index, index+size, [&bufferIn](size_t i1, size_t i2) {return bufferIn[i1] > bufferIn[i2];});
   }
   else
-    stable_sort(bufferIn, bufferIn+size, cmp_Down);
+    stable_sort(bufferIn, bufferIn+size, cmp_DownF);
   return 0;
 }
 
@@ -130,7 +155,6 @@ int Common::sortDownF(float *bufferIn, int *index, int size)
 //returns the index to data closest to value.
 int Common::nearestIndex(float value, float *data, int size)
 {
-//  printf("[%.1f]->", value); for(int i=0; i<size; i++) printf("%.1f ", data[i]); printf("\n");    
   int indexLow=0;
   int indexHigh=size-1;
   int indexCenter;
@@ -239,7 +263,7 @@ int Common::nearestIndexMassRangeLow(float value, MASS_RANGE *data, int size)
   int indexHigh=size-1;
   int indexCenter;
   
-  if(indexHigh==indexLow) return 0;
+  if(size<=0 || indexHigh==indexLow) return -1;
   if(indexHigh==indexLow+1) //the nearest one returns.
   {
     if(value-data[indexLow].low <= data[indexHigh].low-value) return indexLow;
@@ -270,7 +294,7 @@ int Common::nearestIndexMassRangeHigh(float value, MASS_RANGE *data, int size)
   int indexHigh=size-1;
   int indexCenter;
   
-  if(indexHigh==indexLow) return 0;
+  if(size<=0 || indexHigh==indexLow) return -1;
   if(indexHigh==indexLow+1) //the nearest one returns
   {
     if(value-data[indexLow].high <= data[indexHigh].high-value) return indexLow;
@@ -329,8 +353,9 @@ float Common::medianF(float *data, int size)
   tmpData=new float[size];
   for(int i=0; i<size; i++) //copy, since sort() destroys the origin.
     tmpData[i]=data[i];
-  sortUpF(tmpData, 0, size); //increasing order.
   
+  sortUpF(tmpData, 0, size); //increasing order.
+
   if(!(size%2)) {//if even
     if(half>0)
     {median=(tmpData[half]+tmpData[half-1])/2.0;} //average value

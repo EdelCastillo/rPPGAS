@@ -21,9 +21,10 @@
 #' @param data_file: absolute reference to the file with the imzML extension.
 #' @param params  
 #'      "massResolution": mass resolution with which the spectra were acquired.
-#'                 "SNR": signal-to-noise ratio
-#'         "noiseMethod": method for estimating noise.
-#'    "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+#'                 "SNR": signal-to-noise ratio (by defect=1)
+#'         "noiseMethod": method for estimating noise (by defect="estnoise_mad").
+#'    "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered (by defect=1).
+#'         "linkedPeaks": two peaks are considered linked if they are closer than the given standard deviation (by defect=3).   
 #' @param lowMass:  lower mass to consider
 #' @param highMass: higher mass to consider
 #' @param nThreads: number of threads for parallel processing (if zero, nThreads=maxCores-1)
@@ -64,8 +65,13 @@ getPeakMatrix<-function(data_file,
   }
   if(!(exists("noiseMethod", where=params)))
   {
-    print("warning: by default, noiseMethod will be MAD type.")
+    print("warning: by default, noiseMethod parameter will be MAD type.")
     params=c(params, "noiseMethod"="estnoise_mad")
+  }
+  if(!(exists("linkedPeaks", where=params)))
+  {
+    print("warning: by default, linkedPeaks parameter will be 3 sd.") 
+    params=c(params, "linkedPeaks"=3)
   }
   if(!(exists("massResolution", where=params)))
   {
@@ -172,6 +178,11 @@ getPxGaussians<-function(data_file,
   {
     print("warning: by default, noiseMethod will be MAD type.")
     params=c(params, "noiseMethod"="estnoise_mad")
+  }
+  if(!(exists("linkedPeaks", where=params)))
+  {
+    print("warning: by default, linkedPeaks parameter will be 3 sd.") 
+    params=c(params, "linkedPeaks"=3)
   }
   if(!(exists("massResolution", where=params)))
   {

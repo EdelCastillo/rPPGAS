@@ -1,16 +1,45 @@
 #include "onePixel.h"
 
-// [[Rcpp::export]]
+/// R METHOD ////////////////////////////////////////////////////////////////////////
+
+ //'
+ //'  @name rGetPixelGaussians
+ //'  @title It obtains spectrum information from an imzML file.
+ //'  
+ //'  @param ibdFname  absolute reference to the file with the ibd extension.
+ //'  @param imzML  list with information extracted from the imzML file with import_imzML()
+ //'  @param params specific parameters
+ //'              "SNR": signal-to-noise ratio
+ //'   "massResolution": mass resolution with which the spectra were acquired.
+ //'      "noiseMethod": method for estimating noise.
+ //' "minPixelsSupport": minimum percentage of pixels that must support an ion for it to be considered.
+ //'      "linkedPeaks": two peaks are considered linked if they are closer than the given standard deviation (by defect=3).   
+ //'  @param mzLow  lower mass to consider
+ //'  @param mzHigh higher mass to consider
+ //'  @return List: gaussians, mass intensity, SNR, noise
+ //'       gaussians: matrix with parameters for each Gaussian
+ //'            mass: vector with the masses of the raw spectrum
+ //'       intensity: intensity associated with each mass of the raw spectrum
+ //'             SNR: signal-to-noise ratio associated with each mass of the raw spectrum.
+ //'           noise: noise estimation
+ //'     
+ // [[Rcpp::export]]
 List rGetPixelGaussians(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, float mzLow, float mzHigh, int pixel)
 {
   OnePixel onePixel(ibdFname, imzML, params, mzLow, mzHigh, pixel);  
   
   //loads data from a file and converts its peak into Gaussians.
-  onePixel.getGaussians();
+  onePixel.rawToGaussians();
   return onePixel.getPixelGaussians(pixel, mzLow, mzHigh);
 }
 
-
+//Returns a list with information about a spectrum
+// gaussians: matrix with parameters for each Gaussian
+// mass: vector with the masses of the raw spectrum
+// intensity: intensity associated with each mass of the raw spectrum
+// SNR: signal-to-noise ratio associated with each mass of the raw spectrum.
+// noise: noise estimation
+// require of rGetPixelGaussians()
 List OnePixel::getPixelGaussians(int px, float mzLow, float mzHigh)
 {
   if(px<0 || px>m_NPixels) return 0;
@@ -44,7 +73,8 @@ List OnePixel::getPixelGaussians(int px, float mzLow, float mzHigh)
     intensity(i)=m_spectro.int_p [j];
     SNR(i)=m_spectro.SNR_p [j];
   }
-  List ret=List::create(Named("gaussians")=gaussians, Named("mass")=mass, Named("intensity")=intensity, Named("SNR")=SNR);
+  List ret=List::create(Named("gaussians")=gaussians, Named("mass")=mass, Named("intensity")=intensity, 
+                        Named("SNR")=SNR, Named("noise")=m_noise);
 
   return ret;
 }
@@ -83,6 +113,10 @@ OnePixel::OnePixel(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, fl
   cv=params["noiseMethod"];
   String tmpStr=cv[0];
   const char* SNRmethod=tmpStr.get_cstring(); //conversion C
+  
+  //Two peaks are considered linked if they are closer than the given standard deviation.
+  nv=params["linkedPeaks"]; 
+  m_linkedPeaks=nv[0];
   
   if     (strcmp(SNRmethod, "estnoise_diff")==0) {m_SNRmethod=1; }
   else if(strcmp(SNRmethod, "estnoise_sd")  ==0) {m_SNRmethod=2; }
@@ -142,6 +176,7 @@ OnePixel::OnePixel(const char* ibdFname, Rcpp::List imzML, Rcpp::List params, fl
     
     m_massRange_p=0;
 }
+
 //destructor
 //free reserved memory
 OnePixel::~OnePixel()
@@ -153,24 +188,26 @@ OnePixel::~OnePixel()
   if(m_getImzMLData_p) {delete m_getImzMLData_p; m_getImzMLData_p=0;}
   
   if(m_peakFG.peakF_p) 
-      {delete [] m_peakFG.peakF_p; m_peakFG.peakF_p=0;}
+  {delete [] m_peakFG.peakF_p; m_peakFG.peakF_p=0;}
   if(m_peakFG.peakU_p) 
-      {delete [] m_peakFG.peakU_p; m_peakFG.peakU_p=0;}
+  {delete [] m_peakFG.peakU_p; m_peakFG.peakU_p=0;}
   
   //spectrum info
-    if(m_spectro.int_p)      {delete []m_spectro.int_p;    m_spectro.int_p=0;}
-    if(m_spectro.mass_p)     {delete []m_spectro.mass_p;   m_spectro.mass_p=0;}
-    if(m_spectro.SNR_p)      {delete []m_spectro.SNR_p;    m_spectro.SNR_p=0;}
-    if(m_spectro.tmpMass_p)  {delete []m_spectro.tmpMass_p;m_spectro.tmpMass_p=0;}
-    if(m_spectro.tmpInt_p)   {delete []m_spectro.tmpInt_p; m_spectro.tmpInt_p=0;}
-    if(m_spectro.tmpSNR_p)   {delete []m_spectro.tmpSNR_p; m_spectro.tmpSNR_p=0;}
-    if(m_spectro.sort_p)     {delete []m_spectro.sort_p;   m_spectro.sort_p=0;}
-    //  printf("end PeakMatrix destructor\n");
-    
-  }
+  if(m_spectro.int_p)      {delete []m_spectro.int_p;    m_spectro.int_p=0;}
+  if(m_spectro.mass_p)     {delete []m_spectro.mass_p;   m_spectro.mass_p=0;}
+  if(m_spectro.SNR_p)      {delete []m_spectro.SNR_p;    m_spectro.SNR_p=0;}
+  if(m_spectro.tmpMass_p)  {delete []m_spectro.tmpMass_p;m_spectro.tmpMass_p=0;}
+  if(m_spectro.tmpInt_p)   {delete []m_spectro.tmpInt_p; m_spectro.tmpInt_p=0;}
+  if(m_spectro.tmpSNR_p)   {delete []m_spectro.tmpSNR_p; m_spectro.tmpSNR_p=0;}
+  if(m_spectro.sort_p)     {delete []m_spectro.sort_p;   m_spectro.sort_p=0;}
+  //  printf("end PeakMatrix destructor\n");
   
+}
 
-int OnePixel::getGaussians()
+//Loads the raw data from a file, separates the peaks, and establishes the Gaussian.
+//results in internal structure. 
+//return the number of Gaussians or -1 is KO
+int OnePixel::rawToGaussians()
 { 
   IntensityPeak intPeak(m_SNR);
   Common common;
@@ -185,29 +222,29 @@ int OnePixel::getGaussians()
     m_spectro.size=massSize;
     if(massSize<=0) return 0;
     
-//    int idxL=common.nearestIndex(769.3, m_spectro.tmpMass_p, massSize);
-//    int idxH=common.nearestIndex(769.7, m_spectro.tmpMass_p, massSize);
-//    for(int i=idxL; i<idxH; i++) printf("%9.4f ", m_spectro.tmpMass_p[i]); printf("\n");
-    
     //raw info of intensities  
     int intSize=m_getImzMLData_p->getPixelIntensityF(m_pixel, m_spectro.tmpInt_p);
-//    for(int i=idxL; i<idxH; i++) printf("%9.4f ", m_spectro.tmpInt_p[i]); printf("\n");
-    
+
     m_spectro.pixel=m_pixel;
     
     int spSize=m_spectro.size; //spectrum size
     //SNR
-    m_noiseEst_p->getSNR(m_spectro.tmpInt_p, m_spectro.size,  m_spectro.tmpSNR_p);
-    
+    m_noise=m_noiseEst_p->getSNR(m_spectro.tmpInt_p, m_spectro.size,  m_spectro.tmpSNR_p);
+
     //the spectrum is limited to the range of interest.
     iMzLow =common.nearestIndex(m_mzLow,  m_spectro.tmpMass_p, spSize); //low index
     iMzHigh=common.nearestIndex(m_mzHigh, m_spectro.tmpMass_p, spSize); //high index
     spSize=iMzHigh- iMzLow +1;
-    
-    //fault control
+//fault control
     if(iMzLow<0 || iMzHigh>m_spectro.size-1 || iMzHigh-iMzLow>m_spectro.size || iMzHigh<iMzLow) 
     {
       return -1;
+    }
+    if(spSize<=1) 
+    {
+      printf("There is no information in the requested mass range (%.4f/%.4f) for the pixel %d.\nits mass range is %.4f/%.4f\n", 
+             m_mzLow, m_mzHigh, m_pixel, m_spectro.tmpMass_p[0], m_spectro.tmpMass_p[massSize-1]);
+      return 0;
     }
     //mass ordination.
     common.sortUpF(m_spectro.tmpMass_p+iMzLow, m_spectro.sort_p, spSize);
@@ -229,7 +266,7 @@ int OnePixel::getGaussians()
     
     //the peak are extracted from the spectrum (they are delimited by their indices).
     nPeak=intPeak.getPeakList(&m_spectro);
-    //printf("nPeaks:%d\n", nPeak);
+//    printf("nPeaks:%d\n", nPeak);
     
     if(nPeak>0) //if there are peak to treat
     {
@@ -297,15 +334,13 @@ int OnePixel::getGaussians()
     if(centroids_p)     {delete [] centroids_p;       centroids_p=0;}
     if(centroidsIndex_p){delete [] centroidsIndex_p;  centroidsIndex_p=0;}
     
-    return 0;
+    return m_gaussians.size;
 }
   
 
 //getGaussians()
-//Called from a thread.
 //Sets the Gaussians on the peak.
 //Uses the peak separation information (m_peakFG_p).
-//px: pixel.
 //spectro: pointer to the spectrum.
 //gaussians_p: pointer to the structure containing the Gaussians' parameters.
 //Returns the number of Gaussians or a value < 0 on failure.
@@ -314,7 +349,7 @@ int OnePixel::getGaussians(SPECTRO *spectro_p, GAUSS_PARAMS *gaussians_p)
   float *intSpectrum_p=spectro_p->int_p, *massSpectrum_p=spectro_p->mass_p;
   int intSize=spectro_p->size;
   
-  int minMeanPxMag=1;
+  float minMeanPxMag=spectro_p->noise*m_SNR; //minimum value to consider a peak as valid.
   //class for conversion to Gaussians.
   GmmPeak gmmPeak(minMeanPxMag);
   
